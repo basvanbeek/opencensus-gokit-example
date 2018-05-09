@@ -1,4 +1,4 @@
-package svchttp
+package http
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
-	"github.com/basvanbeek/opencensus-gokit-example/frontend/transport/svchttp/routes"
+	"github.com/basvanbeek/opencensus-gokit-example/frontend/transport/http/routes"
 )
 
 func NewHTTPHandler(svcEndpoints implementation.Endpoints) http.Handler {

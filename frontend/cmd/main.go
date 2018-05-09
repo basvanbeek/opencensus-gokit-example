@@ -16,8 +16,8 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
-	qrtransport "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/qr"
-	"github.com/basvanbeek/opencensus-gokit-example/frontend/transport/svchttp"
+	qrclient "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/clients/qr"
+	svchttp "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 )
 
@@ -40,7 +40,7 @@ func main() {
 	var qrClient qr.Service
 	{
 		conn, _ := grpc.Dial(ocgokitexample.QRAddr, grpc.WithInsecure())
-		qrClient = qrtransport.NewGRPCClient(conn, logger)
+		qrClient = qrclient.New(conn, logger)
 	}
 
 	var svc frontend.Service

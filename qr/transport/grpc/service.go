@@ -11,7 +11,6 @@ import (
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
-	"github.com/basvanbeek/opencensus-gokit-example/qr/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
 )
@@ -21,7 +20,7 @@ type grpcServer struct {
 	logger   log.Logger
 }
 
-// NewGRPCServer returns a new gRPC service for provided Go kit endpoints
+// NewGRPCServer returns a new gRPC service for the provided Go kit endpoints
 func NewGRPCServer(endpoints transport.Endpoints, logger log.Logger) pb.QRServer {
 	options := []grpctransport.ServerOption{
 		grpctransport.ServerErrorLogger(logger),
@@ -44,6 +43,7 @@ func (s *grpcServer) Generate(ctx oldcontext.Context, req *pb.GenerateRequest) (
 	return rep.(*pb.GenerateResponse), nil
 }
 
+// decodeGenerateRequest decodes the incoming grpc payload to our go kit payload
 func decodeGenerateRequest(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(*pb.GenerateRequest)
 	return transport.GenerateRequest{
@@ -53,12 +53,13 @@ func decodeGenerateRequest(_ context.Context, request interface{}) (interface{},
 	}, nil
 }
 
+// encodeGenerateResponse encodes the outgoing go kit payload to the grpc payload
 func encodeGenerateResponse(_ context.Context, response interface{}) (interface{}, error) {
 	res := response.(transport.GenerateResponse)
 	switch res.Failed() {
 	case nil:
 		return &pb.GenerateResponse{Image: res.QR}, nil
-	case implementation.ErrInvalidRecoveryLevel, implementation.ErrInvalidSize:
+	case qr.ErrInvalidRecoveryLevel, qr.ErrInvalidSize:
 		return nil, status.Error(codes.InvalidArgument, res.Failed().Error())
 	default:
 		return nil, status.Error(codes.Unknown, res.Failed().Error())

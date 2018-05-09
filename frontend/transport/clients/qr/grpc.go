@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/circuitbreaker"
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/ratelimit"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
@@ -20,45 +21,61 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
 )
 
-type Client struct {
+type client struct {
 	endpoints transport.Endpoints
 	logger    log.Logger
 }
 
-func NewGRPCClient(conn *grpc.ClientConn, logger log.Logger) qr.Service {
-	// initialize circuit breaker
-	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{})
-	// initialize rate limiter
-	rl := rate.NewLimiter(rate.Every(10*time.Second), 2)
+// New returns a new QR client using gRPC transport
+func New(conn *grpc.ClientConn, logger log.Logger) qr.Service {
+	// configure circuit breaker
+	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		MaxRequests: 5,
+		Interval:    10 * time.Second,
+		Timeout:     10 * time.Second,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			return counts.ConsecutiveFailures > 5
+		},
+	})
+	// configure rate limiter
+	rl := rate.NewLimiter(rate.Every(time.Second), 100)
 
 	options := []grpctransport.ClientOption{}
 
 	// grpc client transport endpoint
-	e := transport.Endpoints{
-		Generate: grpctransport.NewClient(
-			conn,
-			"pb.QR",
-			"Generate",
-			encodeGenerateRequest,
-			decodeGenerateResponse,
-			pb.GenerateResponse{},
+	var generateEndpoint endpoint.Endpoint
+	{
+		generateClient := grpctransport.NewClient(
+			conn, "pb.QR", "Generate",
+			encodeGenerateRequest, decodeGenerateResponse, pb.GenerateResponse{},
 			options...,
-		).Endpoint(),
+		)
+		// endpoint middlewares
+		generateEndpoint = generateClient.Endpoint()
+		generateEndpoint = ratelimit.NewErroringLimiter(rl)(generateEndpoint)
+		generateEndpoint = circuitbreaker.Gobreaker(cb)(generateEndpoint)
 	}
 
-	// endpoint middlewares
-	e.Generate = ratelimit.NewErroringLimiter(rl)(e.Generate)
-	e.Generate = circuitbreaker.Gobreaker(cb)(e.Generate)
-
-	return Client{
-		endpoints: e,
-		logger:    logger,
+	return client{
+		endpoints: transport.Endpoints{
+			Generate: generateEndpoint,
+		},
+		logger: logger,
 	}
 }
 
-func (c Client) Generate(
+func (c client) Generate(
 	ctx context.Context, data string, recLevel qr.RecoveryLevel, size int,
 ) ([]byte, error) {
+	// we can also validate parameters before sending the request
+	if recLevel < qr.LevelL || recLevel > qr.LevelH {
+		return nil, qr.ErrInvalidRecoveryLevel
+	}
+	if size > 4096 {
+		return nil, qr.ErrInvalidSize
+	}
+
+	// call our client side go kit endpoint
 	res, err := c.endpoints.Generate(
 		ctx,
 		transport.GenerateRequest{Data: data, Level: recLevel, Size: size},

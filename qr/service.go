@@ -2,19 +2,24 @@ package qr
 
 import (
 	"context"
+	"errors"
+)
+
+// Common Errors for QR Service
+var (
+	ErrInvalidRecoveryLevel = errors.New("invalid recovery level requested")
+	ErrInvalidSize          = errors.New("invalid size requested")
+	ErrGenerate             = errors.New("unable to generate QR")
 )
 
 // RecoveryLevel : Error detection/recovery capacity.
-//
-// There are several levels of error detection/recovery capacity. Higher levels
-// of error recovery are able to correct more errors, with the trade-off of
-// increased symbol size.
+// See: http://www.qrcode.com/en/about/error_correction.html
 type RecoveryLevel int
 
-// RecoveryLevel enum
+// RecoveryLevel enum identifying QR Code Error Correction Capability
 const (
 	LevelL RecoveryLevel = iota // Level L: 7% error recovery.
-	LevelM                      // Level M: 15% error recovery. Good default choice.
+	LevelM                      // Level M: 15% error recovery.
 	LevelQ                      // Level Q: 25% error recovery.
 	LevelH                      // Level H: 30% error recovery.
 )
