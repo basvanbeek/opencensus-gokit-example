@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pb;
+
+service QR {
+  rpc Generate (GenerateRequest) returns (GenerateResponse) {}
+}
+
+message GenerateRequest {
+  string data  = 1;
+  int32  level = 2;
+  int32  size  = 3;
+}
+
+message GenerateResponse {
+  bytes image = 1;
+}

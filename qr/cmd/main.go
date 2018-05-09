@@ -3,22 +3,20 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/basvanbeek/opencensus-gokit-example"
+	"github.com/basvanbeek/opencensus-gokit-example/qr"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/implementation"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 	"google.golang.org/grpc"
-
-	"github.com/basvanbeek/opencensus-gokit-example"
-	"github.com/basvanbeek/opencensus-gokit-example/frontend"
-	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
-	qrtransport "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/qr"
-	"github.com/basvanbeek/opencensus-gokit-example/frontend/transport/svchttp"
-	"github.com/basvanbeek/opencensus-gokit-example/qr"
 )
 
 func main() {
@@ -28,7 +26,7 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowInfo())
 		logger = log.With(logger,
-			"svc", "frontend",
+			"svc", "QRGenerator",
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
 		)
@@ -37,27 +35,23 @@ func main() {
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
 
-	var qrClient qr.Service
-	{
-		conn, _ := grpc.Dial(ocgokitexample.QRAddr, grpc.WithInsecure())
-		qrClient = qrtransport.NewGRPCClient(conn, logger)
-	}
+	var svc qr.Service
+	svc = implementation.NewService(logger)
 
-	var svc frontend.Service
-	svc = implementation.NewService(qrClient, logger)
-
-	var endpoints implementation.Endpoints
-	endpoints = implementation.MakeEndpoints(svc)
+	var endpoints transport.Endpoints
+	endpoints = transport.MakeEndpoints(svc)
 
 	var g run.Group
 	{
 		var (
-			hnd   = svchttp.NewHTTPHandler(endpoints)
-			ln, _ = net.Listen("tcp", ocgokitexample.FrontendAddr)
+			grpcQRServer = svcgrpc.NewGRPCServer(endpoints, logger)
+			ln, _        = net.Listen("tcp", ocgokitexample.QRAddr)
 		)
 
 		g.Add(func() error {
-			return http.Serve(ln, hnd)
+			grpcServer := grpc.NewServer()
+			pb.RegisterQRServer(grpcServer, grpcQRServer)
+			return grpcServer.Serve(ln)
 		}, func(error) {
 			ln.Close()
 		})

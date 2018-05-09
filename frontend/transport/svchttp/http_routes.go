@@ -3,10 +3,12 @@ package svchttp
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/transport/svchttp/routes"
@@ -48,11 +50,15 @@ func encodeUnlockDeviceResponse(_ context.Context, w http.ResponseWriter, respon
 
 func decodeGenerateQRRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req implementation.GenerateQRRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	return req, err
+	v := mux.Vars(r)
+	req.EventID = uuid.FromStringOrNil(v["event_id"])
+	req.DeviceID = uuid.FromStringOrNil(v["device_id"])
+	req.UnlockCode = v["unlock_code"]
+	return req, nil
 }
 
 func encodeGenerateQRResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	log.Printf("%+v\n", response)
 	res := response.(implementation.GenerateQRResponse)
 	if res.Failed() != nil {
 		// TODO: add logic ex. auth
@@ -65,6 +71,7 @@ func encodeGenerateQRResponse(_ context.Context, w http.ResponseWriter, response
 		w.Write(b)
 		return nil
 	}
-
-	return json.NewEncoder(w).Encode(res.QR)
+	w.Header().Set("Content-Type", "image/png")
+	w.Write(res.QR)
+	return nil
 }
