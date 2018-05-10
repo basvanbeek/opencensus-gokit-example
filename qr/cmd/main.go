@@ -20,6 +20,7 @@ import (
 )
 
 func main() {
+	// initialize our structured logger for the service
 	var logger log.Logger
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
@@ -36,27 +37,37 @@ func main() {
 	defer level.Info(logger).Log("msg", "service ended")
 
 	var svc qr.Service
-	svc = implementation.NewService(logger)
+	{
+		svc = implementation.NewService(logger)
+		// add service level middleware here
+	}
 
 	var endpoints transport.Endpoints
-	endpoints = transport.MakeEndpoints(svc)
+	{
+		endpoints = transport.MakeEndpoints(svc)
+		// add endpoint level middleware here
+	}
 
+	// run.Group manages our goroutine lifecycles
+	// see: https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=15m45s
 	var g run.Group
 	{
+		// set-up our grpc transport
 		var (
-			grpcQRServer = svcgrpc.NewGRPCServer(endpoints, logger)
-			ln, _        = net.Listen("tcp", ocgokitexample.QRAddr)
+			qrService   = svcgrpc.NewGRPCServer(endpoints, logger)
+			listener, _ = net.Listen("tcp", ocgokitexample.QRAddr)
 		)
 
 		g.Add(func() error {
 			grpcServer := grpc.NewServer()
-			pb.RegisterQRServer(grpcServer, grpcQRServer)
-			return grpcServer.Serve(ln)
+			pb.RegisterQRServer(grpcServer, qrService)
+			return grpcServer.Serve(listener)
 		}, func(error) {
-			ln.Close()
+			listener.Close()
 		})
 	}
 	{
+		// set-up our signal handler
 		var (
 			cancelInterrupt = make(chan struct{})
 			c               = make(chan os.Signal, 2)
@@ -76,5 +87,6 @@ func main() {
 		})
 	}
 
+	// spawn our goroutines and wait for shutdown
 	level.Error(logger).Log("exit", g.Run())
 }

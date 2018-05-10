@@ -1,20 +1,23 @@
 package svcgrpc
 
 import (
+	// stdlib
 	"context"
 
+	// external
+	"github.com/go-kit/kit/log"
+	grpctransport "github.com/go-kit/kit/transport/grpc"
 	oldcontext "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/go-kit/kit/log"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
-
+	// project
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
 )
 
+// grpc transport service for QR service.
 type grpcServer struct {
 	generate grpctransport.Handler
 	logger   log.Logger
@@ -56,12 +59,12 @@ func decodeGenerateRequest(_ context.Context, request interface{}) (interface{},
 // encodeGenerateResponse encodes the outgoing go kit payload to the grpc payload
 func encodeGenerateResponse(_ context.Context, response interface{}) (interface{}, error) {
 	res := response.(transport.GenerateResponse)
-	switch res.Failed() {
+	switch res.Err {
 	case nil:
 		return &pb.GenerateResponse{Image: res.QR}, nil
 	case qr.ErrInvalidRecoveryLevel, qr.ErrInvalidSize:
-		return nil, status.Error(codes.InvalidArgument, res.Failed().Error())
+		return nil, status.Error(codes.InvalidArgument, res.Err.Error())
 	default:
-		return nil, status.Error(codes.Unknown, res.Failed().Error())
+		return nil, status.Error(codes.Unknown, res.Err.Error())
 	}
 }

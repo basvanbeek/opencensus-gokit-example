@@ -1,9 +1,15 @@
 package qr
 
 import (
+	// stdlib
 	"context"
 	"errors"
 )
+
+// Service describes our QR service.
+type Service interface {
+	Generate(ctx context.Context, url string, level RecoveryLevel, size int) ([]byte, error)
+}
 
 // Common Errors for QR Service
 var (
@@ -23,7 +29,3 @@ const (
 	LevelQ                      // Level Q: 25% error recovery.
 	LevelH                      // Level H: 30% error recovery.
 )
-
-type Service interface {
-	Generate(ctx context.Context, url string, level RecoveryLevel, size int) ([]byte, error)
-}

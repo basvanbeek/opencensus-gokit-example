@@ -1,15 +1,15 @@
 package implementation
 
 import (
-	// stdlib imports
+	// stdlib
 	"context"
 
-	// external lib imports
+	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	qrcode "github.com/skip2/go-qrcode"
 
-	// project imports
+	// project
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 )
 
@@ -41,7 +41,8 @@ func (s *service) Generate(
 	if err != nil {
 		// actual qrcode lib error... log it...
 		level.Error(s.logger).Log("method", "Generate", "err", err.Error())
-		// consumer of this api gets a generic error returned
+		// consumer of this api gets a generic error returned so we don't leak
+		// implementation details upstream
 		err = qr.ErrGenerate
 	}
 
