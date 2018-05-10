@@ -1,19 +1,23 @@
 package http
 
 import (
+	// stdlib
 	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
+	// external
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 
+	// project
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/transport/http/routes"
 )
 
+// NewHTTPHandler wires our Go kit endpoints to the HTTP transport.
 func NewHTTPHandler(svcEndpoints implementation.Endpoints) http.Handler {
 	// set-up router and initialize http endpoints
 	var (

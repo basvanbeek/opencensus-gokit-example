@@ -18,7 +18,7 @@ type service struct {
 	logger log.Logger
 }
 
-// NewService creates and returns new QR service instance
+// NewService creates and returns a new QR service instance
 func NewService(logger log.Logger) qr.Service {
 	return &service{
 		logger: logger,

@@ -1,22 +1,26 @@
 package main
 
 import (
+	// stdlib
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	// external
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/oklog/run"
+	"google.golang.org/grpc"
+
+	// project
 	"github.com/basvanbeek/opencensus-gokit-example"
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/oklog/run"
-	"google.golang.org/grpc"
 )
 
 func main() {
@@ -39,13 +43,13 @@ func main() {
 	var svc qr.Service
 	{
 		svc = implementation.NewService(logger)
-		// add service level middleware here
+		// add service level middlewares here
 	}
 
 	var endpoints transport.Endpoints
 	{
 		endpoints = transport.MakeEndpoints(svc)
-		// add endpoint level middleware here
+		// add endpoint level middlewares here
 	}
 
 	// run.Group manages our goroutine lifecycles

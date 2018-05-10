@@ -1,10 +1,12 @@
 package qr
 
 import (
+	// stdlib
 	"context"
 	"errors"
 	"time"
 
+	// external
 	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -16,18 +18,24 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	// project
+	"github.com/basvanbeek/opencensus-gokit-example"
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
 )
 
+// client grpc transport to QR service.
 type client struct {
 	endpoints transport.Endpoints
 	logger    log.Logger
 }
 
 // New returns a new QR client using gRPC transport
-func New(conn *grpc.ClientConn, logger log.Logger) qr.Service {
+func New(logger log.Logger) qr.Service {
+	// initialize our gRPC connection
+	conn, _ := grpc.Dial(ocgokitexample.QRAddr, grpc.WithInsecure())
+
 	// configure circuit breaker
 	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
 		MaxRequests: 5,
@@ -64,6 +72,7 @@ func New(conn *grpc.ClientConn, logger log.Logger) qr.Service {
 	}
 }
 
+// Generate calls the QR Service Generate method.
 func (c client) Generate(
 	ctx context.Context, data string, recLevel qr.RecoveryLevel, size int,
 ) ([]byte, error) {
@@ -91,6 +100,7 @@ func (c client) Generate(
 	return response.QR, nil
 }
 
+// encodeGenerateRequest encodes the outgoing go kit payload to the grpc payload
 func encodeGenerateRequest(_ context.Context, request interface{}) (interface{}, error) {
 	req := request.(transport.GenerateRequest)
 	return &pb.GenerateRequest{
@@ -100,6 +110,7 @@ func encodeGenerateRequest(_ context.Context, request interface{}) (interface{},
 	}, nil
 }
 
+// decodeGenerateResponse decodes the incoming grpc payload to go kit payload
 func decodeGenerateResponse(_ context.Context, response interface{}) (interface{}, error) {
 	resp := response.(*pb.GenerateResponse)
 	return transport.GenerateResponse{QR: resp.Image}, nil

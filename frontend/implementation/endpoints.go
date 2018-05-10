@@ -1,17 +1,23 @@
 package implementation
 
 import (
+	// stdlib
 	"context"
 
-	"github.com/basvanbeek/opencensus-gokit-example/frontend"
+	// external
 	"github.com/go-kit/kit/endpoint"
+
+	// project
+	"github.com/basvanbeek/opencensus-gokit-example/frontend"
 )
 
+// Endpoints holds all Go kit endpoints for the service.
 type Endpoints struct {
 	UnlockDevice endpoint.Endpoint
 	GenerateQR   endpoint.Endpoint
 }
 
+// MakeEndpoints initializes all Go kit endpoints for the service.
 func MakeEndpoints(s frontend.Service) Endpoints {
 	return Endpoints{
 		UnlockDevice: makeUnlockDeviceEndpoint(s),
