@@ -2,6 +2,7 @@ package main
 
 import (
 	// stdlib
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,13 +13,14 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/kit/sd/etcd"
 	"github.com/oklog/run"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
-	qrclient "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/clients/qr"
+	qrclient "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/clients/grpc/qr"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/http"
 )
 
@@ -28,7 +30,7 @@ func main() {
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
 		logger = log.NewSyncLogger(logger)
-		logger = level.NewFilter(logger, level.AllowInfo())
+		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
 			"svc", "Frontend",
 			"ts", log.DefaultTimestampUTC,
@@ -39,10 +41,34 @@ func main() {
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Create our etcd client for Service Discovery
+	//
+	// we could have used the v3 client but then we must vendor or suffer the
+	// following issue originating from gRPC init:
+	// panic: http: multiple registrations for /debug/requests
+	var sdc etcd.Client
+	{
+		var err error
+		// create our Go kit etcd client
+		sdc, err = etcd.NewClient(ctx, []string{"http://localhost:2379"}, etcd.ClientOptions{})
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+	}
+
 	var svc frontend.Service
 	{
+		// create an instancer for the client
+		instancer, err := etcd.NewInstancer(sdc, "/services/QR/grpc", logger)
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+		}
 		// initialize QR client
-		qrClient := qrclient.New(logger)
+		qrClient := qrclient.New(instancer, logger)
 
 		// create our frontend service
 		svc = implementation.NewService(qrClient, logger)

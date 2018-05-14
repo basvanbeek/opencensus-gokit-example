@@ -4,6 +4,7 @@ import (
 	// stdlib
 	"context"
 	"errors"
+	"io"
 	"time"
 
 	// external
@@ -11,7 +12,9 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/ratelimit"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"github.com/go-kit/kit/sd"
+	"github.com/go-kit/kit/sd/lb"
+	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/sony/gobreaker"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
@@ -32,41 +35,66 @@ type client struct {
 }
 
 // New returns a new QR client using gRPC transport
-func New(logger log.Logger) qr.Service {
-	// initialize our gRPC connection
-	conn, _ := grpc.Dial(ocgokitexample.QRAddr, grpc.WithInsecure())
+func New(instancer sd.Instancer, logger log.Logger) qr.Service {
+	// initialize our gRPC host mapper helper
+	hm := ocgokitexample.NewHostMapper(grpc.WithInsecure())
 
-	// configure circuit breaker
-	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
-		MaxRequests: 5,
-		Interval:    10 * time.Second,
-		Timeout:     10 * time.Second,
-		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures > 5
-		},
-	})
-	// configure rate limiter
-	rl := rate.NewLimiter(rate.Every(time.Second), 100)
+	options := []kitgrpc.ClientOption{}
 
-	options := []grpctransport.ClientOption{}
+	// makeEndpoint wires a QR service Go kit method endpoint
+	makeEndpoint := func(
+		method string, reply interface{},
+		enc kitgrpc.EncodeRequestFunc, dec kitgrpc.DecodeResponseFunc,
+	) endpoint.Endpoint {
 
-	// grpc client transport endpoint
-	var generateEndpoint endpoint.Endpoint
-	{
-		generateClient := grpctransport.NewClient(
-			conn, "pb.QR", "Generate",
-			encodeGenerateRequest, decodeGenerateResponse, pb.GenerateResponse{},
-			options...,
-		)
-		// endpoint middlewares
-		generateEndpoint = generateClient.Endpoint()
-		generateEndpoint = ratelimit.NewErroringLimiter(rl)(generateEndpoint)
-		generateEndpoint = circuitbreaker.Gobreaker(cb)(generateEndpoint)
+		// configure circuit breaker
+		cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+			Name:        "QR/grpc/" + method,
+			MaxRequests: 5,
+			Interval:    10 * time.Second,
+			Timeout:     10 * time.Second,
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				return counts.ConsecutiveFailures > 5
+			},
+		})
+
+		// configure rate limiter
+		rl := rate.NewLimiter(rate.Every(time.Second), 100)
+
+		// our method sd.Factory is called when a new QR service is discovered.
+		factory := func(instance string) (endpoint.Endpoint, io.Closer, error) {
+
+			// try to get connection to advertised instance
+			conn, closer, err := hm.Get(instance)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			// set-up our go kit client endpoint
+			var e endpoint.Endpoint
+			e = kitgrpc.NewClient(conn, "pb.QR", method, enc, dec, reply, options...).Endpoint()
+			e = ratelimit.NewErroringLimiter(rl)(e)
+			e = circuitbreaker.Gobreaker(cb)(e)
+
+			return e, closer, nil
+		}
+
+		// endpointer manages list of available endpoints servicing our method
+		endpointer := sd.NewEndpointer(instancer, factory, logger)
+
+		// balancer can do a round robin pick from the endpointer list
+		balancer := lb.NewRoundRobin(endpointer)
+
+		// retry uses balancer for executing a method call with retry and timeout
+		// logic so client consumer does not have to think about it.
+		retry := lb.Retry(3, 5*time.Second, balancer)
+		return retry
 	}
 
+	// create our QR client by initializing all method endpoints
 	return client{
 		endpoints: transport.Endpoints{
-			Generate: generateEndpoint,
+			Generate: makeEndpoint("Generate", pb.GenerateResponse{}, encodeGenerateRequest, decodeGenerateResponse),
 		},
 		logger: logger,
 	}

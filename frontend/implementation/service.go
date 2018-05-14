@@ -37,6 +37,6 @@ func (s *service) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID,
 func (s *service) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) ([]byte, error) {
 	level.Debug(s.logger).Log("method", "GenerateQR")
 	return s.qrClient.Generate(
-		ctx, eventID.String()+":"+deviceID.String()+":"+unlockCode, 10, -1,
+		ctx, eventID.String()+":"+deviceID.String()+":"+unlockCode, qr.LevelM, -1,
 	)
 }

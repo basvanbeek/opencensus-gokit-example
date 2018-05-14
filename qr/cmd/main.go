@@ -2,6 +2,7 @@ package main
 
 import (
 	// stdlib
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -11,6 +12,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/kit/sd/etcd"
 	"github.com/oklog/run"
 	"google.golang.org/grpc"
 
@@ -29,7 +31,7 @@ func main() {
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
 		logger = log.NewSyncLogger(logger)
-		logger = level.NewFilter(logger, level.AllowInfo())
+		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
 			"svc", "QRGenerator",
 			"ts", log.DefaultTimestampUTC,
@@ -40,12 +42,33 @@ func main() {
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Create our etcd client for Service Discovery
+	//
+	// we could have used the v3 client but then we must vendor or suffer the
+	// following issue originating from gRPC init:
+	// panic: http: multiple registrations for /debug/requests
+	var sdc etcd.Client
+	{
+		var err error
+		// create our Go kit etcd client
+		sdc, err = etcd.NewClient(ctx, []string{"http://localhost:2379"}, etcd.ClientOptions{})
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+	}
+
+	// Create our QR Service
 	var svc qr.Service
 	{
 		svc = implementation.NewService(logger)
 		// add service level middlewares here
 	}
 
+	// Create our Go kit endpoints for the QR Service
 	var endpoints transport.Endpoints
 	{
 		endpoints = transport.MakeEndpoints(svc)
@@ -58,15 +81,21 @@ func main() {
 	{
 		// set-up our grpc transport
 		var (
+			bindIP, _   = ocgokitexample.HostIP()
 			qrService   = svcgrpc.NewGRPCServer(endpoints, logger)
-			listener, _ = net.Listen("tcp", ocgokitexample.QRAddr)
+			listener, _ = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			localAddr   = listener.Addr().String()
+			service     = etcd.Service{Key: "/services/QR/grpc/" + localAddr, Value: localAddr}
+			registrar   = etcd.NewRegistrar(sdc, service, logger)
+			grpcServer  = grpc.NewServer()
 		)
+		pb.RegisterQRServer(grpcServer, qrService)
 
 		g.Add(func() error {
-			grpcServer := grpc.NewServer()
-			pb.RegisterQRServer(grpcServer, qrService)
+			registrar.Register()
 			return grpcServer.Serve(listener)
 		}, func(error) {
+			registrar.Deregister()
 			listener.Close()
 		})
 	}
