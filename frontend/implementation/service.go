@@ -3,6 +3,7 @@ package implementation
 import (
 	// stdlib
 	"context"
+	"strings"
 
 	// external
 	"github.com/go-kit/kit/log"
@@ -35,8 +36,26 @@ func (s *service) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID,
 
 // Generate returns a new QR code device unlock image based on the provided details.
 func (s *service) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) ([]byte, error) {
-	level.Debug(s.logger).Log("method", "GenerateQR")
+	var (
+		logger = log.With(s.logger, "method", "GenerateQR")
+	)
+
+	if eventID == uuid.Nil {
+		level.Warn(logger).Log("err", frontend.ErrRequireEventID)
+		return nil, frontend.ErrRequireEventID
+	}
+	if deviceID == uuid.Nil {
+		level.Warn(logger).Log("err", frontend.ErrRequireDeviceID)
+		return nil, frontend.ErrRequireDeviceID
+	}
+
+	unlockCode = strings.Trim(unlockCode, "\r\n\t ")
+
+	if unlockCode == "" {
+		level.Warn(logger).Log("err", frontend.ErrRequireUnlockCode)
+		return nil, frontend.ErrRequireUnlockCode
+	}
 	return s.qrClient.Generate(
-		ctx, eventID.String()+":"+deviceID.String()+":"+unlockCode, qr.LevelM, -1,
+		ctx, eventID.String()+":"+deviceID.String()+":"+unlockCode, qr.LevelM, 256,
 	)
 }

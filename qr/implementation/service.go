@@ -29,6 +29,10 @@ func NewService(logger log.Logger) qr.Service {
 func (s *service) Generate(
 	ctx context.Context, url string, recLevel qr.RecoveryLevel, size int,
 ) ([]byte, error) {
+	var (
+		logger = log.With(s.logger, "method", "Generate")
+	)
+
 	// test for valid input
 	if recLevel < qr.LevelL || recLevel > qr.LevelH {
 		return nil, qr.ErrInvalidRecoveryLevel
@@ -40,7 +44,7 @@ func (s *service) Generate(
 	b, err := qrcode.Encode(url, qrcode.RecoveryLevel(recLevel), size)
 	if err != nil {
 		// actual qrcode lib error... log it...
-		level.Error(s.logger).Log("method", "Generate", "err", err.Error())
+		level.Error(logger).Log("err", err)
 		// consumer of this api gets a generic error returned so we don't leak
 		// implementation details upstream
 		err = qr.ErrGenerate

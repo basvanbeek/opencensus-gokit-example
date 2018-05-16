@@ -15,8 +15,11 @@ type Service interface {
 
 // Common Service Errors
 var (
-	ErrEventNotFound  = errors.New("event not found")
-	ErrUnlockNotFound = errors.New("device / unlock code combination not found")
+	ErrRequireEventID    = errors.New("missing required event id")
+	ErrRequireDeviceID   = errors.New("missing required device id")
+	ErrRequireUnlockCode = errors.New("missing required unlock code")
+	ErrEventNotFound     = errors.New("event not found")
+	ErrUnlockNotFound    = errors.New("device / unlock code combination not found")
 )
 
 // Session holds session details

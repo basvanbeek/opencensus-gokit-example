@@ -4,7 +4,6 @@ import (
 	// stdlib
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	// external
@@ -57,12 +56,11 @@ func decodeGenerateQRRequest(_ context.Context, r *http.Request) (interface{}, e
 	v := mux.Vars(r)
 	req.EventID = uuid.FromStringOrNil(v["event_id"])
 	req.DeviceID = uuid.FromStringOrNil(v["device_id"])
-	req.UnlockCode = v["unlock_code"]
+	req.UnlockCode = v["code"]
 	return req, nil
 }
 
 func encodeGenerateQRResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	log.Printf("%+v\n", response)
 	res := response.(implementation.GenerateQRResponse)
 	if res.Failed() != nil {
 		// TODO: add logic ex. auth
