@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+
+service Device {
+  rpc Unlock (UnlockRequest) returns (UnlockResponse) {}
+}
+
+message UnlockRequest {
+  bytes  event_id  = 1;
+  bytes  device_id = 2;
+  string code      = 3;
+}
+
+message UnlockResponse {
+  string event_caption  = 1;
+  string device_caption = 2;
+}
