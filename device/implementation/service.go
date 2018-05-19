@@ -5,8 +5,10 @@ import (
 	"context"
 
 	// external
+
 	"github.com/go-kit/kit/log"
 	"github.com/satori/go.uuid"
+	"golang.org/x/crypto/bcrypt"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/device"
@@ -30,6 +32,17 @@ func NewService(rep database.Repository, logger log.Logger) device.Service {
 // Unlock returns new session data for allowing device to check-in participants.
 func (s *service) Unlock(
 	ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string,
-) (device.Session, error) {
-	return device.Session{}, nil
+) (*device.Session, error) {
+	details, err := s.repository.GetDevice(ctx, eventID, deviceID)
+	if err != nil {
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword(details.UnlockHash, []byte(unlockCode))
+	if err != nil {
+		return nil, err
+	}
+	return &device.Session{
+		EventCaption:  details.EventCaption,
+		DeviceCaption: details.DeviceCaption,
+	}, nil
 }

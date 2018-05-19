@@ -27,7 +27,7 @@ type UnlockDeviceRequest struct {
 
 // UnlockDeviceResponse holds the response values for the UnlockDevice method.
 type UnlockDeviceResponse struct {
-	Session frontend.Session
+	Session *frontend.Session
 	err     error
 }
 

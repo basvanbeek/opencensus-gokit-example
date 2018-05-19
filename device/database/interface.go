@@ -17,4 +17,5 @@ type Repository interface {
 type Session struct {
 	EventCaption  string
 	DeviceCaption string
+	UnlockHash    []byte
 }

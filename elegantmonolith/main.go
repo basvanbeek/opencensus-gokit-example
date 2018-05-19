@@ -12,10 +12,14 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/jmoiron/sqlx"
 	"github.com/oklog/run"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example"
+	"github.com/basvanbeek/opencensus-gokit-example/device"
+	"github.com/basvanbeek/opencensus-gokit-example/device/database/sqlite"
+	devimplementation "github.com/basvanbeek/opencensus-gokit-example/device/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend"
 	feimplementation "github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
 	fesvchttp "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/http"
@@ -23,7 +27,15 @@ import (
 	qrimplementation "github.com/basvanbeek/opencensus-gokit-example/qr/implementation"
 )
 
+const (
+	serviceName = "ElegantMonolith"
+)
+
 func main() {
+	var (
+		err error
+	)
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -31,7 +43,7 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", "ElegantMonolith",
+			"svc", serviceName,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
 		)
@@ -39,6 +51,36 @@ func main() {
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
+
+	// Create our DB Connection Driver
+	var db *sqlx.DB
+	{
+		db, err = sqlx.Open("sqlite3", "testfile.db")
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+
+		// make sure the DB is in WAL mode
+		if _, err = db.Exec(`PRAGMA journal_mode=wal`); err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+	}
+
+	// Create our Device service component
+	var deviceService device.Service
+	{
+		var logger = log.With(logger, "component", "Device")
+
+		repository, err := sqlite.New(db, logger)
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+		deviceService = devimplementation.NewService(repository, logger)
+		// add service level middlewares here
+	}
 
 	// Create our QR service component
 	var qrService qr.Service
@@ -49,7 +91,9 @@ func main() {
 	// Create our frontend service component
 	var frontendService frontend.Service
 	{
-		frontendService = feimplementation.NewService(qrService, log.With(logger, "component", "QR"))
+		frontendService = feimplementation.NewService(
+			deviceService, qrService, log.With(logger, "component", "Frontend"),
+		)
 		// add service level middlewares here
 	}
 

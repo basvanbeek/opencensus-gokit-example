@@ -39,13 +39,13 @@ func (s *sqlite) GetDevice(ctx context.Context, eventID, deviceID uuid.UUID) (*d
 
 	if err := s.db.QueryRow(`
     SELECT
-      e.name as event_caption, d.name as device_caption
+      e.name as event_caption, d.name as device_caption, d.hash
     FROM event e INNER JOIN device d ON e.id = d.event_id
     WHERE event_id = ?1 AND device_id = ?2;
   `,
 		eventID.Bytes(), deviceID.Bytes(),
 	).Scan(
-		session.EventCaption, session.DeviceCaption,
+		session.EventCaption, session.DeviceCaption, session.UnlockHash,
 	); err != nil {
 		level.Error(s.logger).Log("err", err.Error())
 		return nil, err

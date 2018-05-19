@@ -9,7 +9,7 @@ import (
 
 // Service describes our Device service.
 type Service interface {
-	Unlock(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) (Session, error)
+	Unlock(ctx context.Context, eventID, deviceID uuid.UUID, code string) (*Session, error)
 }
 
 // Common Service Errors

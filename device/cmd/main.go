@@ -48,7 +48,7 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", "Device",
+			"svc", serviceName,
 			"instance", instance,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
@@ -150,7 +150,7 @@ func main() {
 			service      = svchttp.NewHTTPHandler(endpoints)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance  = "/services/" + serviceName + "/http/" + instance.String()
-			localAddr    = listener.Addr().String()
+			localAddr    = "http://" + listener.Addr().String()
 			serviceEntry = etcd.Service{Key: svcInstance, Value: localAddr}
 			registrar    = etcd.NewRegistrar(sdc, serviceEntry, logger)
 		)

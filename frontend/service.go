@@ -9,7 +9,7 @@ import (
 
 // Service describes our Frontend service.
 type Service interface {
-	UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) (Session, error)
+	UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) (*Session, error)
 	GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) ([]byte, error)
 }
 
