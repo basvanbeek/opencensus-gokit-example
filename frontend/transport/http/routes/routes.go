@@ -15,7 +15,7 @@ type Endpoints struct {
 func InitEndpoints(router *mux.Router) Endpoints {
 	return Endpoints{
 		UnlockDevice: router.
-			Methods("POST").
+			Methods("POST", "GET").
 			Path("/unlock_device/{event_id}/{device_id}").
 			Queries("code", "{code}").
 			Name("unlock_device"),

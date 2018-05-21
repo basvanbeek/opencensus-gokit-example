@@ -54,16 +54,16 @@ func v1(tx *sqlx.Tx) (err error) {
 		h2_2, _ = bcrypt.GenerateFromPassword([]byte("secret4"), bcrypt.DefaultCost)
 	)
 
-	if err = insert(tx, insDev, evt1, dev1_1, "scanner #1", h1_1); err != nil {
+	if err = insert(tx, insDev, dev1_1, evt1, "scanner #1", h1_1); err != nil {
 		return
 	}
-	if err = insert(tx, insDev, evt1, dev1_2, "scanner #2", h1_2); err != nil {
+	if err = insert(tx, insDev, dev1_2, evt1, "scanner #2", h1_2); err != nil {
 		return
 	}
-	if err = insert(tx, insDev, evt2, dev2_1, "scanner #1", h2_1); err != nil {
+	if err = insert(tx, insDev, dev2_1, evt2, "scanner #1", h2_1); err != nil {
 		return
 	}
-	if err = insert(tx, insDev, evt2, dev2_2, "scanner #2", h2_2); err != nil {
+	if err = insert(tx, insDev, dev2_2, evt2, "scanner #2", h2_2); err != nil {
 		return
 	}
 

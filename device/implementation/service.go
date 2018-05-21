@@ -3,6 +3,7 @@ package implementation
 import (
 	// stdlib
 	"context"
+	"database/sql"
 
 	// external
 
@@ -35,7 +36,10 @@ func (s *service) Unlock(
 ) (*device.Session, error) {
 	details, err := s.repository.GetDevice(ctx, eventID, deviceID)
 	if err != nil {
-		return nil, err
+		if err != sql.ErrNoRows {
+			return nil, err
+		}
+		details = &database.Session{}
 	}
 	err = bcrypt.CompareHashAndPassword(details.UnlockHash, []byte(unlockCode))
 	if err != nil {

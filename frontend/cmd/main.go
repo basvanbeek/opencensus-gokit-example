@@ -20,8 +20,8 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/frontend/implementation"
+	devclient "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/clients/device"
 	qrclient "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/clients/grpc/qr"
-	devclient "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/clients/http/device"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/frontend/transport/http"
 )
 
@@ -69,8 +69,8 @@ func main() {
 			level.Error(logger).Log("exit", err)
 		}
 
-		// initialize our Device client
-		devClient := devclient.New(devInstancer, logger)
+		// initialize our Device client using http transport
+		devClient := devclient.NewHTTP(devInstancer, logger)
 
 		// create an instancer for the QR client
 		qrInstancer, err := etcd.NewInstancer(sdc, "/services/QR/grpc", logger)

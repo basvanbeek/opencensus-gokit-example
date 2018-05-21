@@ -23,7 +23,7 @@ func runVersioner(db *sqlx.DB, log log.Logger) error {
 }
 
 func insert(tx *sqlx.Tx, query string, args ...interface{}) error {
-	res, err := tx.Exec(query, args)
+	res, err := tx.Exec(query, args...)
 	if err != nil {
 		return err
 	}
