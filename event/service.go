@@ -1,0 +1,31 @@
+package event
+
+import (
+	"context"
+	"errors"
+
+	"github.com/satori/go.uuid"
+)
+
+// Event Service Errors
+var (
+	ErrService      = errors.New("internal service error")
+	ErrUnauthorized = errors.New("unauthorizated")
+	ErrNotFound     = errors.New("event not found")
+	ErrEventExists  = errors.New("event already exists")
+)
+
+// Service describes our Event service.
+type Service interface {
+	Create(ctx context.Context, tenantID uuid.UUID, event Event) (*uuid.UUID, error)
+	Get(ctx context.Context, tenantID, id uuid.UUID) (*Event, error)
+	Update(ctx context.Context, tenantID uuid.UUID, event Event) error
+	Delete(ctx context.Context, tenantID uuid.UUID, id uuid.UUID) error
+	List(ctx context.Context, tenantID uuid.UUID) ([]*Event, error)
+}
+
+// Event data
+type Event struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}

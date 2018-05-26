@@ -21,8 +21,8 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc"
-	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
+	svcgrpc "github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/pb"
 )
 
 func main() {

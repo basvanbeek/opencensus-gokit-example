@@ -1,4 +1,4 @@
-package svcgrpc
+package grpc
 
 import (
 	// stdlib
@@ -14,7 +14,7 @@ import (
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/pb"
 )
 
 // grpc transport service for QR service.

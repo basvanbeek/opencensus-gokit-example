@@ -25,7 +25,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example"
 	"github.com/basvanbeek/opencensus-gokit-example/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/qr/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/grpc/pb"
+	"github.com/basvanbeek/opencensus-gokit-example/qr/transport/pb"
 )
 
 // client grpc transport to QR service.
