@@ -8,6 +8,11 @@ import (
 // Endpoints holds all available HTTP endpoints for our service.
 type Endpoints struct {
 	Login        *mux.Route
+	EventCreate  *mux.Route
+	EventGet     *mux.Route
+	EventUpdate  *mux.Route
+	EventDelete  *mux.Route
+	EventList    *mux.Route
 	UnlockDevice *mux.Route
 	GenerateQR   *mux.Route
 }
@@ -19,6 +24,26 @@ func InitEndpoints(router *mux.Router) Endpoints {
 			Methods("POST").
 			Path("/login").
 			Name("login"),
+		EventCreate: router.
+			Methods("POST").
+			Path("/event").
+			Name("event_create"),
+		EventGet: router.
+			Methods("GET").
+			Path("/event/{event_id}").
+			Name("event_get"),
+		EventUpdate: router.
+			Methods("PUT").
+			Path("/event/{event_id}").
+			Name("event_update"),
+		EventDelete: router.
+			Methods("DELETE").
+			Path("/event/{event_id}").
+			Name("event_delete"),
+		EventList: router.
+			Methods("GET").
+			Path("/event").
+			Name("event_list"),
 		UnlockDevice: router.
 			Methods("POST", "GET").
 			Path("/unlock_device/{event_id}/{device_id}").

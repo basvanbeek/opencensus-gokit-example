@@ -21,6 +21,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
 	devclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/device"
+	evtclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/event"
 	qrclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/qr/grpc"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 )
@@ -67,6 +68,13 @@ func main() {
 
 	var svc frontend.Service
 	{
+		// create an instancer for the event client
+		evtInstancer, err := etcd.NewInstancer(sdc, "/services/Event/twirp", logger)
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+		}
+		evtClient := evtclient.NewTwirp(evtInstancer, logger)
+
 		// create an instancer for the device client
 		devInstancer, err := etcd.NewInstancer(sdc, "/services/Device/http", logger)
 		if err != nil {
@@ -85,7 +93,7 @@ func main() {
 		qrClient := qrclient.New(qrInstancer, logger)
 
 		// create our frontend service
-		svc = implementation.NewService(devClient, qrClient, logger)
+		svc = implementation.NewService(evtClient, devClient, qrClient, logger)
 		// add service level middlewares here
 	}
 

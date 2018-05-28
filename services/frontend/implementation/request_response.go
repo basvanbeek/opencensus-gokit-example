@@ -18,6 +18,96 @@ type Failer interface {
 	Failed() error
 }
 
+// LoginRequest holds the request parameters for the Login method.
+type LoginRequest struct {
+	Login string `json:"login"`
+	Pass  string `json:"pass"`
+}
+
+// LoginResponse holds the response values for the Login method.
+type LoginResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	TenantName string    `json:"tenant_name"`
+	err        error
+}
+
+// Failed implements Failer.
+func (r LoginResponse) Failed() error { return r.err }
+
+// EventCreateRequest holds the request parameters for the EventCreate method.
+type EventCreateRequest struct {
+	TenantID uuid.UUID      `json:"tenant_id"`
+	Event    frontend.Event `json:"event"`
+}
+
+// EventCreateResponse holds the response values for the EventCreate method.
+type EventCreateResponse struct {
+	EventID *uuid.UUID `json:"event_id,omitempty"`
+	err     error
+}
+
+// Failed implements Failer.
+func (r EventCreateResponse) Failed() error { return r.err }
+
+// EventGetRequest holds the request parameters for the EventGet method.
+type EventGetRequest struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+	EventID  uuid.UUID `json:"event_id"`
+}
+
+// EventGetResponse holds the response values for the EventGet method.
+type EventGetResponse struct {
+	Event *frontend.Event `json:"event,omitempty"`
+	err   error
+}
+
+// Failed implements Failer.
+func (r EventGetResponse) Failed() error { return r.err }
+
+// EventUpdateRequest holds the request parameters for the EventUpdate method.
+type EventUpdateRequest struct {
+	TenantID uuid.UUID      `json:"tenant_id"`
+	Event    frontend.Event `json:"event"`
+}
+
+// EventUpdateResponse holds the response values for the EventUpdate method.
+type EventUpdateResponse struct {
+	err error
+}
+
+// Failed implements Failer.
+func (r EventUpdateResponse) Failed() error { return r.err }
+
+// EventDeleteRequest holds the request parameters for the EventDelete method.
+type EventDeleteRequest struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+	EventID  uuid.UUID `json:"event_id"`
+}
+
+// EventDeleteResponse holds the response values for the EventDelete method.
+type EventDeleteResponse struct {
+	err error
+}
+
+// Failed implements Failer.
+func (r EventDeleteResponse) Failed() error { return r.err }
+
+// EventListRequest holds the request parameters for the EventList method.
+type EventListRequest struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+}
+
+// EventListResponse holds the response values for the EventList method.
+type EventListResponse struct {
+	Events []*frontend.Event `json:"events,omitempty"`
+	err    error
+}
+
+// Failed implements Failer.
+func (r EventListResponse) Failed() error { return r.err }
+
 // UnlockDeviceRequest holds the request parameters for the UnlockDevice method.
 type UnlockDeviceRequest struct {
 	EventID    uuid.UUID `json:"event_id"`
@@ -27,7 +117,7 @@ type UnlockDeviceRequest struct {
 
 // UnlockDeviceResponse holds the response values for the UnlockDevice method.
 type UnlockDeviceResponse struct {
-	Session *frontend.Session
+	Session *frontend.Session `json:"session,omitempty"`
 	err     error
 }
 
@@ -49,21 +139,3 @@ type GenerateQRResponse struct {
 
 // Failed implements Failer.
 func (r GenerateQRResponse) Failed() error { return r.err }
-
-// LoginRequest holds the request parameters for the Login method.
-type LoginRequest struct {
-	Login string `json:"login"`
-	Pass  string `json:"pass"`
-}
-
-// LoginResponse holds the response values for the Login method.
-type LoginResponse struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	TenantID   uuid.UUID `json:"tenant_id"`
-	TenantName string    `json:"tenant_name"`
-	err        error
-}
-
-// Failed implements Failer.
-func (r LoginResponse) Failed() error { return r.err }

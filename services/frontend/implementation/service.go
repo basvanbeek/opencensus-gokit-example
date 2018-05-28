@@ -12,20 +12,23 @@ import (
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
+	"github.com/basvanbeek/opencensus-gokit-example/services/event"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 )
 
 // service implements frontend.Service
 type service struct {
+	evtClient event.Service
 	devClient device.Service
 	qrClient  qr.Service
 	logger    log.Logger
 }
 
 // NewService creates and returns a new Frontend service instance
-func NewService(devClient device.Service, qrClient qr.Service, logger log.Logger) frontend.Service {
+func NewService(evtClient event.Service, devClient device.Service, qrClient qr.Service, logger log.Logger) frontend.Service {
 	return &service{
+		evtClient: evtClient,
 		devClient: devClient,
 		qrClient:  qrClient,
 		logger:    logger,
@@ -58,6 +61,38 @@ func (s *service) Login(ctx context.Context, user, pass string) (*frontend.Login
 	}
 
 	return nil, frontend.ErrUserPassUnknown
+}
+
+func (s *service) EventCreate(ctx context.Context, tenantID uuid.UUID, evt frontend.Event) (*uuid.UUID, error) {
+	return s.evtClient.Create(ctx, tenantID, event.Event(evt))
+}
+
+func (s *service) EventGet(ctx context.Context, tenantID, id uuid.UUID) (*frontend.Event, error) {
+	evt, err := s.evtClient.Get(ctx, tenantID, id)
+	if err != nil {
+		return nil, err
+	}
+	return (*frontend.Event)(evt), nil
+}
+
+func (s *service) EventUpdate(ctx context.Context, tenantID uuid.UUID, evt frontend.Event) error {
+	return s.evtClient.Update(ctx, tenantID, event.Event(evt))
+}
+
+func (s *service) EventDelete(ctx context.Context, tenantID, id uuid.UUID) error {
+	return s.evtClient.Delete(ctx, tenantID, id)
+}
+
+func (s *service) EventList(ctx context.Context, tenantID uuid.UUID) ([]*frontend.Event, error) {
+	evts, err := s.evtClient.List(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	events := make([]*frontend.Event, 0, len(evts))
+	for _, e := range evts {
+		events = append(events, (*frontend.Event)(e))
+	}
+	return events, nil
 }
 
 // Unlockdevice returns a new session for allowing device to check-in participants.

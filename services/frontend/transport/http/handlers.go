@@ -29,6 +29,26 @@ func NewHTTPHandler(svcEndpoints implementation.Endpoints) http.Handler {
 		svcEndpoints.Login, decodeLoginRequest, encodeLoginResponse,
 	))
 
+	httpEndpoints.EventCreate.Handler(httptransport.NewServer(
+		svcEndpoints.EventCreate, decodeEventCreateRequest, encodeEventCreateResponse,
+	))
+
+	httpEndpoints.EventGet.Handler(httptransport.NewServer(
+		svcEndpoints.EventGet, decodeEventGetRequest, encodeEventGetResponse,
+	))
+
+	httpEndpoints.EventUpdate.Handler(httptransport.NewServer(
+		svcEndpoints.EventUpdate, decodeEventUpdateRequest, encodeEventUpdateResponse,
+	))
+
+	httpEndpoints.EventDelete.Handler(httptransport.NewServer(
+		svcEndpoints.EventDelete, decodeEventDeleteRequest, encodeEventDeleteResponse,
+	))
+
+	httpEndpoints.EventList.Handler(httptransport.NewServer(
+		svcEndpoints.EventList, decodeEventListRequest, encodeEventListResponse,
+	))
+
 	httpEndpoints.UnlockDevice.Handler(httptransport.NewServer(
 		svcEndpoints.UnlockDevice, decodeUnlockDeviceRequest, encodeUnlockDeviceResponse,
 	))
@@ -56,6 +76,57 @@ func encodeLoginResponse(_ context.Context, w http.ResponseWriter, response inte
 	if err := res.Failed(); err != nil {
 		// create new auth header
 	}
+	return json.NewEncoder(w).Encode(response)
+}
+
+func decodeEventCreateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req implementation.EventCreateRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+func encodeEventCreateResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+func decodeEventGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req implementation.EventGetRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+func encodeEventGetResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+func decodeEventUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req implementation.EventUpdateRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+func encodeEventUpdateResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+func decodeEventDeleteRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req implementation.EventDeleteRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+func encodeEventDeleteResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+func decodeEventListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req implementation.EventListRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+func encodeEventListResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
 }
 

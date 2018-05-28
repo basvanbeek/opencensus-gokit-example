@@ -10,7 +10,15 @@ import (
 // Service describes our Frontend service.
 type Service interface {
 	Login(ctx context.Context, user, pass string) (*Login, error)
+
+	EventCreate(ctx context.Context, tenantID uuid.UUID, event Event) (*uuid.UUID, error)
+	EventGet(ctx context.Context, tenantID, eventID uuid.UUID) (*Event, error)
+	EventUpdate(ctx context.Context, tenantID uuid.UUID, event Event) error
+	EventDelete(ctx context.Context, tenantID, eventID uuid.UUID) error
+	EventList(ctx context.Context, tenantID uuid.UUID) ([]*Event, error)
+
 	UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) (*Session, error)
+
 	GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) ([]byte, error)
 }
 
@@ -31,6 +39,12 @@ type Login struct {
 	Name       string
 	TenantID   uuid.UUID
 	TenantName string
+}
+
+// Event holds event details
+type Event struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 // Session holds session details
