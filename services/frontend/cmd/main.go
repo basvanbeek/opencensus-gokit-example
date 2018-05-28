@@ -20,14 +20,12 @@ import (
 
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
+	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	devclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/device"
 	evtclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/event"
 	qrclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/qr/grpc"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
-)
-
-const (
-	frontendAddr = ":8000"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 )
 
 func main() {
@@ -97,9 +95,9 @@ func main() {
 		// add service level middlewares here
 	}
 
-	var endpoints implementation.Endpoints
+	var endpoints transport.Endpoints
 	{
-		endpoints = implementation.MakeEndpoints(svc)
+		endpoints = transport.MakeEndpoints(svc)
 		// add endpoint level middlewares here
 	}
 
@@ -109,13 +107,19 @@ func main() {
 	{
 		// set-up our http transport
 		var (
+			bindIP, _   = network.HostIP()
+			listener, _ = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			localAddr   = listener.Addr().String()
+			service     = etcd.Service{Key: "/services/Frontend/http/" + localAddr, Value: "http://" + localAddr}
+			registrar   = etcd.NewRegistrar(sdc, service, logger)
 			feService   = svchttp.NewHTTPHandler(endpoints)
-			listener, _ = net.Listen("tcp", frontendAddr)
 		)
 
 		g.Add(func() error {
+			registrar.Register()
 			return http.Serve(listener, feService)
 		}, func(error) {
+			registrar.Deregister()
 			listener.Close()
 		})
 	}

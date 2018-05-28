@@ -1,4 +1,4 @@
-package implementation
+package transport
 
 import (
 	// external
@@ -20,8 +20,8 @@ type Failer interface {
 
 // LoginRequest holds the request parameters for the Login method.
 type LoginRequest struct {
-	Login string `json:"login"`
-	Pass  string `json:"pass"`
+	User string `json:"user"`
+	Pass string `json:"pass"`
 }
 
 // LoginResponse holds the response values for the Login method.

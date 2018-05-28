@@ -12,12 +12,13 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	// project
-	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
+
+	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
 )
 
 // NewHTTPHandler wires our Go kit endpoints to the HTTP transport.
-func NewHTTPHandler(svcEndpoints implementation.Endpoints) http.Handler {
+func NewHTTPHandler(svcEndpoints transport.Endpoints) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
 		router        = mux.NewRouter()
@@ -65,14 +66,14 @@ func NewHTTPHandler(svcEndpoints implementation.Endpoints) http.Handler {
 // Go kit request_response payloads.
 
 func decodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.LoginRequest
+	var req transport.LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
 
 func encodeLoginResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	res := response.(implementation.LoginResponse)
+	res := response.(transport.LoginResponse)
 	if err := res.Failed(); err != nil {
 		// create new auth header
 	}
@@ -80,7 +81,7 @@ func encodeLoginResponse(_ context.Context, w http.ResponseWriter, response inte
 }
 
 func decodeEventCreateRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.EventCreateRequest
+	var req transport.EventCreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
@@ -90,7 +91,7 @@ func encodeEventCreateResponse(_ context.Context, w http.ResponseWriter, respons
 	return json.NewEncoder(w).Encode(response)
 }
 func decodeEventGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.EventGetRequest
+	var req transport.EventGetRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
@@ -100,7 +101,7 @@ func encodeEventGetResponse(_ context.Context, w http.ResponseWriter, response i
 	return json.NewEncoder(w).Encode(response)
 }
 func decodeEventUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.EventUpdateRequest
+	var req transport.EventUpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
@@ -110,7 +111,7 @@ func encodeEventUpdateResponse(_ context.Context, w http.ResponseWriter, respons
 	return json.NewEncoder(w).Encode(response)
 }
 func decodeEventDeleteRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.EventDeleteRequest
+	var req transport.EventDeleteRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
@@ -120,7 +121,7 @@ func encodeEventDeleteResponse(_ context.Context, w http.ResponseWriter, respons
 	return json.NewEncoder(w).Encode(response)
 }
 func decodeEventListRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.EventListRequest
+	var req transport.EventListRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
@@ -131,7 +132,7 @@ func encodeEventListResponse(_ context.Context, w http.ResponseWriter, response 
 }
 
 func decodeUnlockDeviceRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.UnlockDeviceRequest
+	var req transport.UnlockDeviceRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
@@ -142,7 +143,7 @@ func encodeUnlockDeviceResponse(_ context.Context, w http.ResponseWriter, respon
 }
 
 func decodeGenerateQRRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req implementation.GenerateQRRequest
+	var req transport.GenerateQRRequest
 	v := mux.Vars(r)
 	req.EventID = uuid.FromStringOrNil(v["event_id"])
 	req.DeviceID = uuid.FromStringOrNil(v["device_id"])
@@ -151,7 +152,7 @@ func decodeGenerateQRRequest(_ context.Context, r *http.Request) (interface{}, e
 }
 
 func encodeGenerateQRResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	res := response.(implementation.GenerateQRResponse)
+	res := response.(transport.GenerateQRResponse)
 	if res.Failed() != nil {
 		// TODO: add logic ex. auth
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

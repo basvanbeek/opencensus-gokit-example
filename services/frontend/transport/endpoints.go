@@ -1,4 +1,4 @@
-package implementation
+package transport
 
 import (
 	// stdlib
@@ -40,7 +40,7 @@ func MakeEndpoints(s frontend.Service) Endpoints {
 func makeLoginEndpoint(s frontend.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(LoginRequest)
-		login, err := s.Login(ctx, req.Login, req.Pass)
+		login, err := s.Login(ctx, req.User, req.Pass)
 		if err != nil {
 			return LoginResponse{err: err}, nil
 		}

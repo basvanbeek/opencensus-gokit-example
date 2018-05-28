@@ -2,6 +2,7 @@ package main
 
 import (
 	// stdlib
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/kit/sd/etcd"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
@@ -21,16 +23,18 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/database/sqlite"
 	devimplementation "github.com/basvanbeek/opencensus-gokit-example/services/device/implementation"
+	"github.com/basvanbeek/opencensus-gokit-example/services/event"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	feimplementation "github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
+	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	fesvchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	qrimplementation "github.com/basvanbeek/opencensus-gokit-example/services/qr/implementation"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 )
 
 const (
-	serviceName  = "ElegantMonolith"
-	frontendAddr = ":8000"
+	serviceName = "ElegantMonolith"
 )
 
 func main() {
@@ -54,6 +58,25 @@ func main() {
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Create our etcd client for Service Discovery
+	//
+	// we could have used the v3 client but then we must vendor or suffer the
+	// following issue originating from gRPC init:
+	// panic: http: multiple registrations for /debug/requests
+	var sdc etcd.Client
+	{
+		var err error
+		// create our Go kit etcd client
+		sdc, err = etcd.NewClient(ctx, []string{"http://localhost:2379"}, etcd.ClientOptions{})
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+	}
+
 	// Create our DB Connection Driver
 	var db *sqlx.DB
 	{
@@ -69,6 +92,9 @@ func main() {
 			os.Exit(-1)
 		}
 	}
+
+	// Create our Event service component
+	var eventService event.Service
 
 	// Create our Device service component
 	var deviceService device.Service
@@ -94,14 +120,15 @@ func main() {
 	var frontendService frontend.Service
 	{
 		frontendService = feimplementation.NewService(
-			deviceService, qrService, log.With(logger, "component", "Frontend"),
+			eventService, deviceService, qrService,
+			log.With(logger, "component", "Frontend"),
 		)
 		// add service level middlewares here
 	}
 
-	var endpoints feimplementation.Endpoints
+	var endpoints transport.Endpoints
 	{
-		endpoints = feimplementation.MakeEndpoints(frontendService)
+		endpoints = transport.MakeEndpoints(frontendService)
 		// add frontend endpoint level middlewares here
 	}
 
@@ -111,13 +138,19 @@ func main() {
 	{
 		// set-up our http transport
 		var (
+			bindIP, _       = network.HostIP()
 			frontendService = fesvchttp.NewHTTPHandler(endpoints)
-			listener, _     = net.Listen("tcp", frontendAddr)
+			listener, _     = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			localAddr       = listener.Addr().String()
+			service         = etcd.Service{Key: "/services/Frontend/http/" + localAddr, Value: "http://" + localAddr}
+			registrar       = etcd.NewRegistrar(sdc, service, logger)
 		)
 
 		g.Add(func() error {
+			registrar.Register()
 			return http.Serve(listener, frontendService)
 		}, func(error) {
+			registrar.Deregister()
 			listener.Close()
 		})
 	}
