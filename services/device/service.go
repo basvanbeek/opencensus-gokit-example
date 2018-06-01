@@ -1,10 +1,17 @@
 package device
 
 import (
+	// stdlib
 	"context"
 	"errors"
 
+	// external
 	"github.com/satori/go.uuid"
+)
+
+// Service name
+const (
+	ServiceName = "device"
 )
 
 // Service describes our Device service.

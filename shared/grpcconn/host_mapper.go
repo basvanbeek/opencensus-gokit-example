@@ -1,9 +1,11 @@
 package grpcconn
 
 import (
+	// stdlib
 	"io"
 	"sync"
 
+	// external
 	"google.golang.org/grpc"
 )
 

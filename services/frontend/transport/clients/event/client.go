@@ -1,8 +1,6 @@
 package event
 
 import (
-	// stdlib
-
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"

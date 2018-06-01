@@ -6,7 +6,6 @@ import (
 	"io"
 
 	// external
-
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"

@@ -1,10 +1,17 @@
 package frontend
 
 import (
+	// stdlib
 	"context"
 	"errors"
 
+	// external
 	"github.com/satori/go.uuid"
+)
+
+// Service name
+const (
+	ServiceName = "frontend"
 )
 
 // Service describes our Frontend service.

@@ -3,11 +3,13 @@ package sqlite
 import (
 	// stdlib
 	"context"
+	"database/sql"
 
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
+	"github.com/openxact/versioning"
 	"github.com/satori/go.uuid"
 
 	// project
@@ -22,7 +24,14 @@ type sqlite struct {
 // New returns a new Repository backed by SQLite
 func New(db *sqlx.DB, logger log.Logger) (database.Repository, error) {
 	// run our embedded database versioning logic
-	if err := runVersioner(db, logger); err != nil {
+	versioner, err := versioning.New(
+		db, "ocgokitexample.device", level.Debug(logger), false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	versioner.Add(1, v1)
+	if _, err = versioner.Run(); err != nil {
 		return nil, err
 	}
 
@@ -47,8 +56,11 @@ func (s *sqlite) GetDevice(ctx context.Context, eventID, deviceID uuid.UUID) (*d
 	).Scan(
 		session.EventCaption, session.DeviceCaption, session.UnlockHash,
 	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, database.ErrNotFound
+		}
 		level.Error(s.logger).Log("err", err.Error())
-		return nil, err
+		return nil, database.ErrRepository
 	}
 
 	return session, nil

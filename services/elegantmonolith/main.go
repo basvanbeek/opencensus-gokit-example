@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// external
 	"github.com/go-kit/kit/log"
@@ -17,13 +18,15 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
+	uuid "github.com/satori/go.uuid"
 
 	// project
-
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
-	"github.com/basvanbeek/opencensus-gokit-example/services/device/database/sqlite"
+	devsql "github.com/basvanbeek/opencensus-gokit-example/services/device/database/sqlite"
 	devimplementation "github.com/basvanbeek/opencensus-gokit-example/services/device/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
+	evtsql "github.com/basvanbeek/opencensus-gokit-example/services/event/database/sqlite"
+	evtimplementation "github.com/basvanbeek/opencensus-gokit-example/services/event/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	feimplementation "github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
@@ -39,7 +42,8 @@ const (
 
 func main() {
 	var (
-		err error
+		err      error
+		instance = uuid.Must(uuid.NewV4())
 	)
 
 	// initialize our structured logger for the service
@@ -50,6 +54,7 @@ func main() {
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
 			"svc", serviceName,
+			"instance", instance,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
 		)
@@ -68,7 +73,6 @@ func main() {
 	// panic: http: multiple registrations for /debug/requests
 	var sdc etcd.Client
 	{
-		var err error
 		// create our Go kit etcd client
 		sdc, err = etcd.NewClient(ctx, []string{"http://localhost:2379"}, etcd.ClientOptions{})
 		if err != nil {
@@ -80,7 +84,7 @@ func main() {
 	// Create our DB Connection Driver
 	var db *sqlx.DB
 	{
-		db, err = sqlx.Open("sqlite3", "testfile.db")
+		db, err = sqlx.Open("sqlite3", "monolith.db")
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
@@ -95,13 +99,25 @@ func main() {
 
 	// Create our Event service component
 	var eventService event.Service
+	{
+		var logger = log.With(logger, "component", event.ServiceName)
+
+		repository, err := evtsql.New(db, logger)
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+		eventService = evtimplementation.NewService(repository, logger)
+		// add service level middlewares here
+
+	}
 
 	// Create our Device service component
 	var deviceService device.Service
 	{
-		var logger = log.With(logger, "component", "Device")
+		var logger = log.With(logger, "component", device.ServiceName)
 
-		repository, err := sqlite.New(db, logger)
+		repository, err := devsql.New(db, logger)
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
@@ -113,15 +129,19 @@ func main() {
 	// Create our QR service component
 	var qrService qr.Service
 	{
-		qrService = qrimplementation.NewService(log.With(logger, "component", "QR"))
+		var logger = log.With(logger, "component", qr.ServiceName)
+
+		qrService = qrimplementation.NewService(logger)
+		// add service level middlewares here
 	}
 
 	// Create our frontend service component
 	var frontendService frontend.Service
 	{
+		var logger = log.With(logger, "component", frontend.ServiceName)
+
 		frontendService = feimplementation.NewService(
-			eventService, deviceService, qrService,
-			log.With(logger, "component", "Frontend"),
+			eventService, deviceService, qrService, logger,
 		)
 		// add service level middlewares here
 	}
@@ -139,10 +159,12 @@ func main() {
 		// set-up our http transport
 		var (
 			bindIP, _       = network.HostIP()
-			frontendService = fesvchttp.NewHTTPHandler(endpoints)
-			listener, _     = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			localAddr       = listener.Addr().String()
-			service         = etcd.Service{Key: "/services/Frontend/http/" + localAddr, Value: "http://" + localAddr}
+			frontendService = fesvchttp.NewHTTPHandler(endpoints, logger)
+			listener, _     = net.Listen("tcp", bindIP+":0")                                       // dynamic port assignment
+			svcInstance     = fmt.Sprintf("/services/%s/http/%s/", frontend.ServiceName, instance) // monolith is basically frontend service but with all micro service backend logic embedded
+			addr            = "http://" + listener.Addr().String()
+			ttl             = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			service         = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar       = etcd.NewRegistrar(sdc, service, logger)
 		)
 

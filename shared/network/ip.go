@@ -1,6 +1,7 @@
 package network
 
 import (
+	// stdlib
 	"errors"
 	"net"
 	"os"

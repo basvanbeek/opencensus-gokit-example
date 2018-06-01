@@ -6,6 +6,11 @@ import (
 	"errors"
 )
 
+// Service name
+const (
+	ServiceName = "qr"
+)
+
 // Service describes our QR service.
 type Service interface {
 	Generate(ctx context.Context, url string, level RecoveryLevel, size int) ([]byte, error)

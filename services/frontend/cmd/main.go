@@ -9,15 +9,18 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
 	"github.com/oklog/run"
+	uuid "github.com/satori/go.uuid"
 
 	// project
-
+	"github.com/basvanbeek/opencensus-gokit-example/services/device"
+	"github.com/basvanbeek/opencensus-gokit-example/services/event"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
@@ -25,10 +28,16 @@ import (
 	evtclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/event"
 	qrclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/qr/grpc"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
+	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 )
 
 func main() {
+	var (
+		err      error
+		instance = uuid.Must(uuid.NewV4())
+	)
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -36,7 +45,8 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", "Frontend",
+			"svc", frontend.ServiceName,
+			"instance", instance,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
 		)
@@ -55,7 +65,6 @@ func main() {
 	// panic: http: multiple registrations for /debug/requests
 	var sdc etcd.Client
 	{
-		var err error
 		// create our Go kit etcd client
 		sdc, err = etcd.NewClient(ctx, []string{"http://localhost:2379"}, etcd.ClientOptions{})
 		if err != nil {
@@ -67,14 +76,14 @@ func main() {
 	var svc frontend.Service
 	{
 		// create an instancer for the event client
-		evtInstancer, err := etcd.NewInstancer(sdc, "/services/Event/twirp", logger)
+		evtInstancer, err := etcd.NewInstancer(sdc, "/services/"+event.ServiceName+"/twirp", logger)
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 		}
 		evtClient := evtclient.NewTwirp(evtInstancer, logger)
 
 		// create an instancer for the device client
-		devInstancer, err := etcd.NewInstancer(sdc, "/services/Device/http", logger)
+		devInstancer, err := etcd.NewInstancer(sdc, "/services/"+device.ServiceName+"/http", logger)
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 		}
@@ -83,7 +92,7 @@ func main() {
 		devClient := devclient.NewHTTP(devInstancer, logger)
 
 		// create an instancer for the QR client
-		qrInstancer, err := etcd.NewInstancer(sdc, "/services/QR/grpc", logger)
+		qrInstancer, err := etcd.NewInstancer(sdc, "/services/"+qr.ServiceName+"/grpc", logger)
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 		}
@@ -109,10 +118,12 @@ func main() {
 		var (
 			bindIP, _   = network.HostIP()
 			listener, _ = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			localAddr   = listener.Addr().String()
-			service     = etcd.Service{Key: "/services/Frontend/http/" + localAddr, Value: "http://" + localAddr}
+			svcInstance = fmt.Sprintf("/services/%s/http/%s/", frontend.ServiceName, instance)
+			addr        = "http://" + listener.Addr().String()
+			ttl         = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			service     = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar   = etcd.NewRegistrar(sdc, service, logger)
-			feService   = svchttp.NewHTTPHandler(endpoints)
+			feService   = svchttp.NewHTTPHandler(endpoints, logger)
 		)
 
 		g.Add(func() error {

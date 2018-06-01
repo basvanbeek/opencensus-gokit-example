@@ -1,10 +1,17 @@
 package event
 
 import (
+	// stdlib
 	"context"
 	"errors"
 
+	// external
 	"github.com/satori/go.uuid"
+)
+
+// Service name
+const (
+	ServiceName = "event"
 )
 
 // Event Service Errors

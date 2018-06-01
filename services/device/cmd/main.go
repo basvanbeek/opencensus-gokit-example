@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// external
 	"github.com/go-kit/kit/log"
@@ -31,10 +32,6 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 )
 
-const (
-	serviceName = "Device"
-)
-
 func main() {
 	var (
 		err      error
@@ -48,7 +45,7 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", serviceName,
+			"svc", device.ServiceName,
 			"instance", instance,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
@@ -90,7 +87,7 @@ func main() {
 	// Create our DB Connection Driver
 	var db *sqlx.DB
 	{
-		db, err = sqlx.Open("sqlite3", "repository.db")
+		db, err = sqlx.Open("sqlite3", "device.db")
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
@@ -130,9 +127,10 @@ func main() {
 		var (
 			service      = svcgrpc.NewGRPCServer(endpoints, logger)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			svcInstance  = "/services/" + serviceName + "/grpc/" + instance.String()
+			svcInstance  = fmt.Sprintf("/services/%s/grpc/%s/", device.ServiceName, instance)
 			addr         = listener.Addr().String()
-			serviceEntry = etcd.Service{Key: svcInstance + addr, Value: addr}
+			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			serviceEntry = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar    = etcd.NewRegistrar(sdc, serviceEntry, logger)
 			grpcServer   = grpc.NewServer()
 		)
@@ -151,9 +149,10 @@ func main() {
 		var (
 			service      = svchttp.NewHTTPHandler(endpoints)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			svcInstance  = "/services/" + serviceName + "/http/" + instance.String()
-			localAddr    = "http://" + listener.Addr().String()
-			serviceEntry = etcd.Service{Key: svcInstance, Value: localAddr}
+			svcInstance  = fmt.Sprintf("/services/%s/http/%s/", device.ServiceName, instance)
+			addr         = "http://" + listener.Addr().String()
+			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			serviceEntry = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar    = etcd.NewRegistrar(sdc, serviceEntry, logger)
 		)
 

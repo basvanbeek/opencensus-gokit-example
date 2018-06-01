@@ -56,7 +56,7 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 	mw := middleware(rl, cb)
 
 	// initialize our factory handler
-	handler := factory(instancer, logger)
+	handler := factory(instancer)
 
 	return &client{
 		endpoints: transport.Endpoints{
@@ -236,10 +236,10 @@ func middleware(rl *rate.Limiter, cb *gobreaker.CircuitBreaker) endpoint.Middlew
 }
 
 // factory creates a service discovery driven Go kit client endpoint
-func factory(instancer sd.Instancer, logger log.Logger) func(sd.Factory) endpoint.Endpoint {
+func factory(instancer sd.Instancer) func(sd.Factory) endpoint.Endpoint {
 	return func(factory sd.Factory) endpoint.Endpoint {
 		// endpointer manages list of available endpoints servicing our method
-		endpointer := sd.NewEndpointer(instancer, factory, logger)
+		endpointer := sd.NewEndpointer(instancer, factory, log.NewNopLogger())
 
 		// balancer can do a random pick from the endpointer list
 		balancer := lb.NewRandom(endpointer, time.Now().UnixNano())

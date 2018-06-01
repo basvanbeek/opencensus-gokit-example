@@ -1,6 +1,9 @@
 package sd
 
-import "io"
+import (
+	// stdlib
+	"io"
+)
 
 // Factory is a function that converts an instance string (e.g. host:port) to a
 // specific client implementation. A factory also returns an io.Closer that's

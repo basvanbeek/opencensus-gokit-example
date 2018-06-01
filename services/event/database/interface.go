@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	// external
-
 	"github.com/satori/go.uuid"
 )
 

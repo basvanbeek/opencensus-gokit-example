@@ -3,9 +3,16 @@ package database
 import (
 	// stdlib
 	"context"
+	"errors"
 
 	// external
 	"github.com/satori/go.uuid"
+)
+
+// Common Errors
+var (
+	ErrRepository = errors.New("unable to handle request")
+	ErrNotFound   = errors.New("device not found")
 )
 
 // Repository describes the resource methods needed for this service.

@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	// project
-
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http/routes"
 )

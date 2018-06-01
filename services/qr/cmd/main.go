@@ -8,12 +8,14 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
 	"github.com/oklog/run"
+	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 
 	// project
@@ -26,6 +28,11 @@ import (
 )
 
 func main() {
+	var (
+		err      error
+		instance = uuid.Must(uuid.NewV4())
+	)
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -33,7 +40,8 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", "QRGenerator",
+			"svc", qr.ServiceName,
+			"instance", instance,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
 		)
@@ -52,7 +60,6 @@ func main() {
 	// panic: http: multiple registrations for /debug/requests
 	var sdc etcd.Client
 	{
-		var err error
 		// create our Go kit etcd client
 		sdc, err = etcd.NewClient(ctx, []string{"http://localhost:2379"}, etcd.ClientOptions{})
 		if err != nil {
@@ -81,13 +88,15 @@ func main() {
 	{
 		// set-up our grpc transport
 		var (
-			bindIP, _   = network.HostIP()
-			qrService   = svcgrpc.NewGRPCServer(endpoints, logger)
-			listener, _ = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			localAddr   = listener.Addr().String()
-			service     = etcd.Service{Key: "/services/QR/grpc/" + localAddr, Value: localAddr}
-			registrar   = etcd.NewRegistrar(sdc, service, logger)
-			grpcServer  = grpc.NewServer()
+			bindIP, _    = network.HostIP()
+			qrService    = svcgrpc.NewGRPCServer(endpoints, logger)
+			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			svcInstance  = fmt.Sprintf("/services/%s/grpc/%s/", qr.ServiceName, instance)
+			addr         = listener.Addr().String()
+			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			serviceEntry = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
+			registrar    = etcd.NewRegistrar(sdc, serviceEntry, logger)
+			grpcServer   = grpc.NewServer()
 		)
 		pb.RegisterQRServer(grpcServer, qrService)
 

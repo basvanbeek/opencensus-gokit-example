@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	// external
 	"github.com/go-kit/kit/log"
@@ -41,7 +42,7 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", "Event",
+			"svc", event.ServiceName,
 			"instance", instance,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
@@ -72,7 +73,7 @@ func main() {
 	// Create our DB Connection Driver
 	var db *sqlx.DB
 	{
-		db, err = sqlx.Open("sqlite3", "repository.db")
+		db, err = sqlx.Open("sqlite3", "event.db")
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
@@ -113,8 +114,10 @@ func main() {
 			bindIP, _    = network.HostIP()
 			eventService = svcevent.NewTwirpServer(svc, logger)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			localAddr    = listener.Addr().String()
-			service      = etcd.Service{Key: "/services/Event/twirp/" + localAddr, Value: localAddr}
+			svcInstance  = "/services/" + event.ServiceName + "/twirp/" + instance.String()
+			addr         = listener.Addr().String()
+			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			service      = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar    = etcd.NewRegistrar(sdc, service, logger)
 			twirpHandler = pb.NewEventServer(eventService, nil)
 			router       = mux.NewRouter()

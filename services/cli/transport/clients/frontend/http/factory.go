@@ -2,12 +2,10 @@ package frontend
 
 import (
 	// stdlib
-
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -20,7 +18,6 @@ import (
 	"github.com/gorilla/mux"
 
 	// project
-
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
 )
@@ -194,7 +191,6 @@ func genericEncoder(route *mux.Route, r *http.Request, request interface{}) erro
 	if methods, err := route.GetMethods(); err == nil {
 		r.Method = methods[0]
 	}
-	fmt.Printf("%+v\n", r)
 
 	if err := json.NewEncoder(&buf).Encode(request); err != nil {
 		return err
