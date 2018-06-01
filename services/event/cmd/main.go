@@ -115,7 +115,7 @@ func main() {
 			eventService = svcevent.NewTwirpServer(svc, logger)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance  = "/services/" + event.ServiceName + "/twirp/" + instance.String()
-			addr         = listener.Addr().String()
+			addr         = "http://" + listener.Addr().String()
 			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
 			service      = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar    = etcd.NewRegistrar(sdc, service, logger)
@@ -123,9 +123,10 @@ func main() {
 			router       = mux.NewRouter()
 		)
 
-		router.Handle(pb.EventPathPrefix, twirpHandler)
+		router.PathPrefix(pb.EventPathPrefix).Handler(twirpHandler)
 
 		g.Add(func() error {
+			registrar.Register()
 			return http.Serve(listener, router)
 		}, func(error) {
 			registrar.Deregister()

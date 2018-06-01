@@ -129,7 +129,20 @@ func (c client) List(
 		return nil, sd.ErrNoClients
 	}
 
-	return nil, nil
+	pbListResponse, err := ci.List(ctx, &pb.ListRequest{
+		TenantId: tenantID.Bytes(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	events := make([]*event.Event, 0, len(pbListResponse.Events))
+	for _, evt := range pbListResponse.Events {
+		events = append(events, &event.Event{
+			ID:   uuid.FromBytesOrNil(evt.Id),
+			Name: evt.Name,
+		})
+	}
+	return events, nil
 }
 
 func factory(instancer kitsd.Instancer, logger log.Logger) func() pb.Event {

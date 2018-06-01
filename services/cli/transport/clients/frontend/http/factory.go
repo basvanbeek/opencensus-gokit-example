@@ -83,7 +83,13 @@ func (c Codec) EventCreate() (string, kithttp.EncodeRequestFunc, kithttp.DecodeR
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
 	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
-		return nil, nil
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.EventCreateResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "EventCreate", encRequest, decResponse
@@ -98,7 +104,13 @@ func (c Codec) EventGet() (string, kithttp.EncodeRequestFunc, kithttp.DecodeResp
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
 	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
-		return nil, nil
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.EventGetResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "EventGet", encRequest, decResponse
@@ -112,8 +124,14 @@ func (c Codec) EventUpdate() (string, kithttp.EncodeRequestFunc, kithttp.DecodeR
 	}
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
-	decResponse := func(_ context.Context, response *http.Response) (interface{}, error) {
-		return nil, nil
+	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.EventUpdateResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "EventUpdate", encRequest, decResponse
@@ -127,8 +145,14 @@ func (c Codec) EventDelete() (string, kithttp.EncodeRequestFunc, kithttp.DecodeR
 	}
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
-	decResponse := func(_ context.Context, response *http.Response) (interface{}, error) {
-		return nil, nil
+	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.EventDeleteResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "EventDelete", encRequest, decResponse
@@ -143,7 +167,13 @@ func (c Codec) EventList() (string, kithttp.EncodeRequestFunc, kithttp.DecodeRes
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
 	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
-		return nil, nil
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.EventListResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "EventList", encRequest, decResponse
@@ -158,7 +188,13 @@ func (c Codec) UnlockDevice() (string, kithttp.EncodeRequestFunc, kithttp.Decode
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
 	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
-		return nil, nil
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.UnlockDeviceResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "UnlockDevice", encRequest, decResponse
@@ -173,7 +209,13 @@ func (c Codec) GenerateQR() (string, kithttp.EncodeRequestFunc, kithttp.DecodeRe
 
 	// decResponse decodes the incoming HTTP payload to the Go kit payload
 	decResponse := func(_ context.Context, r *http.Response) (interface{}, error) {
-		return nil, nil
+		if r.StatusCode != http.StatusOK {
+			return nil, errors.New(r.Status)
+		}
+
+		var resp transport.GenerateQRResponse
+		err := json.NewDecoder(r.Body).Decode(&resp)
+		return resp, err
 	}
 
 	return "GenerateQR", encRequest, decResponse

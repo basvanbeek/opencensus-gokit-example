@@ -4,6 +4,9 @@
 *.so
 *.dylib
 
+# app databases
+*.db*
+
 # Test binary, build with `go test -c`
 *.test
 

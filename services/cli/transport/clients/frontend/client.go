@@ -176,7 +176,7 @@ func (c client) EventList(ctx context.Context, tenantID uuid.UUID) ([]*frontend.
 		return nil, err
 	}
 
-	res := response.(*transport.EventListResponse)
+	res := response.(transport.EventListResponse)
 	if res.Failed() != nil {
 		return nil, res.Failed()
 	}
