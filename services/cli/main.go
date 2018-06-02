@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	serviceName = "frontend-cli"
+	serviceName = "cli"
 )
 
 func main() {
