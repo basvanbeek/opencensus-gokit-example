@@ -15,6 +15,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
@@ -30,6 +31,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc/pb"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
 )
 
 func main() {
@@ -51,6 +53,9 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
+
+	// initialize our OpenCensus configuration
+	defer opencensus.Setup(device.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -117,11 +122,16 @@ func main() {
 	{
 		endpoints = transport.MakeEndpoints(svc)
 		// add endpoint level middlewares here
+		endpoints.Unlock = kitoc.TraceEndpoint("UnlockEndpoint")(endpoints.Unlock)
 	}
 
 	// run.Group manages our goroutine lifecycles
 	// see: https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=15m45s
 	var g run.Group
+	{
+		// set-up our ZPages handler
+		opencensus.ZPages(g, logger)
+	}
 	{
 		// set-up our grpc transport
 		var (
@@ -147,7 +157,7 @@ func main() {
 	{
 		// set-up our http transport
 		var (
-			service      = svchttp.NewHTTPHandler(endpoints)
+			service      = svchttp.NewHTTPHandler(endpoints, logger)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance  = fmt.Sprintf("/services/%s/http/%s/", device.ServiceName, instance)
 			addr         = "http://" + listener.Addr().String()

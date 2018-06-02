@@ -2,6 +2,8 @@ package event
 
 import (
 	// external
+	"net/http"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
 
@@ -11,6 +13,6 @@ import (
 )
 
 // NewTwirp returns a new event client using the Twirp transport.
-func NewTwirp(instancer sd.Instancer, logger log.Logger) event.Service {
-	return eventtwirp.NewClient(instancer, logger)
+func NewTwirp(instancer sd.Instancer, client *http.Client, logger log.Logger) event.Service {
+	return eventtwirp.NewClient(instancer, client, logger)
 }

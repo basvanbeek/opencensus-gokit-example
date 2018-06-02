@@ -6,6 +6,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	oldcontext "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -27,6 +28,7 @@ type grpcServer struct {
 func NewGRPCServer(endpoints transport.Endpoints, logger log.Logger) pb.QRServer {
 	options := []grpctransport.ServerOption{
 		grpctransport.ServerErrorLogger(logger),
+		kitoc.GRPCServerTrace(),
 	}
 
 	return &grpcServer{

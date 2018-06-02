@@ -19,6 +19,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/oklog/run"
 	uuid "github.com/satori/go.uuid"
+	"go.opencensus.io/plugin/ochttp"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
@@ -27,6 +28,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/event/transport/pb"
 	svcevent "github.com/basvanbeek/opencensus-gokit-example/services/event/transport/twirp"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
 )
 
 func main() {
@@ -48,6 +50,9 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
+
+	// initialize our OpenCensus configuration
+	defer opencensus.Setup(event.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -109,6 +114,10 @@ func main() {
 	// see: https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=15m45s
 	var g run.Group
 	{
+		// set-up our ZPages handler
+		opencensus.ZPages(g, logger)
+	}
+	{
 		// set-up our twirp transport
 		var (
 			bindIP, _    = network.HostIP()
@@ -125,9 +134,14 @@ func main() {
 
 		router.PathPrefix(pb.EventPathPrefix).Handler(twirpHandler)
 
+		// add default ochttp handler for TWIRP
+		handler := &ochttp.Handler{
+			Handler: router,
+		}
+
 		g.Add(func() error {
 			registrar.Register()
-			return http.Serve(listener, router)
+			return http.Serve(listener, handler)
 		}, func(error) {
 			registrar.Deregister()
 			listener.Close()

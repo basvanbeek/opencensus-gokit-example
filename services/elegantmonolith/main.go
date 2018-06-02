@@ -34,6 +34,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	qrimplementation "github.com/basvanbeek/opencensus-gokit-example/services/qr/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
 )
 
 const (
@@ -59,6 +60,9 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
+
+	// initialize our OpenCensus configuration
+	defer opencensus.Setup(serviceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -155,6 +159,10 @@ func main() {
 	// run.Group manages our goroutine lifecycles
 	// see: https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=15m45s
 	var g run.Group
+	{
+		// set-up our ZPages handler
+		opencensus.ZPages(g, logger)
+	}
 	{
 		// set-up our http transport
 		var (

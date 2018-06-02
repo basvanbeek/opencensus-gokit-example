@@ -8,6 +8,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
@@ -24,47 +25,52 @@ func NewHTTPHandler(svcEndpoints transport.Endpoints, logger log.Logger) http.Ha
 		router        = mux.NewRouter()
 		httpEndpoints = routes.InitEndpoints(router)
 		errorLogger   = httptransport.ServerErrorLogger(logger)
+		ocTracing     = kitoc.HTTPServerTrace()
 	)
+
+	options := []httptransport.ServerOption{
+		errorLogger, ocTracing,
+	}
 
 	// wire our Go kit handlers to the http endpoints
 	httpEndpoints.Login.Handler(httptransport.NewServer(
 		svcEndpoints.Login, decodeLoginRequest, encodeLoginResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.EventCreate.Handler(httptransport.NewServer(
 		svcEndpoints.EventCreate, decodeEventCreateRequest, encodeEventCreateResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.EventGet.Handler(httptransport.NewServer(
 		svcEndpoints.EventGet, decodeEventGetRequest, encodeEventGetResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.EventUpdate.Handler(httptransport.NewServer(
 		svcEndpoints.EventUpdate, decodeEventUpdateRequest, encodeEventUpdateResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.EventDelete.Handler(httptransport.NewServer(
 		svcEndpoints.EventDelete, decodeEventDeleteRequest, encodeEventDeleteResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.EventList.Handler(httptransport.NewServer(
 		svcEndpoints.EventList, decodeEventListRequest, encodeEventListResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.UnlockDevice.Handler(httptransport.NewServer(
 		svcEndpoints.UnlockDevice, decodeUnlockDeviceRequest, encodeUnlockDeviceResponse,
-		errorLogger,
+		options...,
 	))
 
 	httpEndpoints.GenerateQR.Handler(httptransport.NewServer(
 		svcEndpoints.GenerateQR, decodeGenerateQRRequest, encodeGenerateQRResponse,
-		errorLogger,
+		options...,
 	))
 
 	// return our router as http handler

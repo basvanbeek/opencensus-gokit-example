@@ -12,6 +12,7 @@ import (
 	"github.com/go-kit/kit/ratelimit"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
@@ -36,7 +37,9 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 	codec := fehttp.Codec{Route: routes.InitEndpoints(mux.NewRouter())}
 
 	// set-up our http transport options
-	options := []kithttp.ClientOption{}
+	options := []kithttp.ClientOption{
+		kitoc.HTTPClientTrace(),
+	}
 
 	// configure rate limiter
 	rl := rate.NewLimiter(rate.Every(time.Second), 1000)
@@ -52,22 +55,57 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 		},
 	})
 
-	// initialize our endpoint middleware
-	mw := middleware(rl, cb)
+	// initialize our generic service endpoint middleware
+	mw := endpoint.Chain(
+		ratelimit.NewErroringLimiter(rl),
+		circuitbreaker.Gobreaker(cb),
+	)
 
 	// initialize our factory handler
 	handler := factory(instancer)
 
 	return &client{
 		endpoints: transport.Endpoints{
-			Login:        handler(fehttp.NewFactory(codec.Login, mw, options...)),
-			EventCreate:  handler(fehttp.NewFactory(codec.EventCreate, mw, options...)),
-			EventGet:     handler(fehttp.NewFactory(codec.EventGet, mw, options...)),
-			EventUpdate:  handler(fehttp.NewFactory(codec.EventUpdate, mw, options...)),
-			EventDelete:  handler(fehttp.NewFactory(codec.EventDelete, mw, options...)),
-			EventList:    handler(fehttp.NewFactory(codec.EventList, mw, options...)),
-			UnlockDevice: handler(fehttp.NewFactory(codec.UnlockDevice, mw, options...)),
-			GenerateQR:   handler(fehttp.NewFactory(codec.GenerateQR, mw, options...)),
+			Login: handler(fehttp.NewFactory(
+				codec.Login,
+				endpoint.Chain(kitoc.TraceEndpoint("LoginEndpoint"), mw), // chained custom method middleware
+				options...,
+			)),
+			EventCreate: handler(fehttp.NewFactory(
+				codec.EventCreate,
+				endpoint.Chain(kitoc.TraceEndpoint("EventCreate"), mw), // chained custom method middleware
+				options...,
+			)),
+			EventGet: handler(fehttp.NewFactory(
+				codec.EventGet,
+				endpoint.Chain(kitoc.TraceEndpoint("EventGet"), mw), // chained custom method middleware
+				options...,
+			)),
+			EventUpdate: handler(fehttp.NewFactory(
+				codec.EventUpdate,
+				endpoint.Chain(kitoc.TraceEndpoint("EventUpdate"), mw), // chained custom method middleware
+				options...,
+			)),
+			EventDelete: handler(fehttp.NewFactory(
+				codec.EventDelete,
+				endpoint.Chain(kitoc.TraceEndpoint("EventDelete"), mw), // chained custom method middleware
+				options...,
+			)),
+			EventList: handler(fehttp.NewFactory(
+				codec.EventList,
+				endpoint.Chain(kitoc.TraceEndpoint("EventList"), mw), // chained custom method middleware
+				options...,
+			)),
+			UnlockDevice: handler(fehttp.NewFactory(
+				codec.UnlockDevice,
+				endpoint.Chain(kitoc.TraceEndpoint("UnlockDevice"), mw), // chained custom method middleware
+				options...,
+			)),
+			GenerateQR: handler(fehttp.NewFactory(
+				codec.GenerateQR,
+				endpoint.Chain(kitoc.TraceEndpoint("GenerateQR"), mw), // chained custom method middleware
+				options...,
+			)),
 		},
 		logger: logger,
 	}
@@ -224,15 +262,6 @@ func (c client) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unl
 	}
 
 	return res.QR, nil
-}
-
-// middleware wraps a client endpoint with middlewares
-func middleware(rl *rate.Limiter, cb *gobreaker.CircuitBreaker) endpoint.Middleware {
-	return func(e endpoint.Endpoint) endpoint.Endpoint {
-		e = ratelimit.NewErroringLimiter(rl)(e)
-		e = circuitbreaker.Gobreaker(cb)(e)
-		return e
-	}
 }
 
 // factory creates a service discovery driven Go kit client endpoint

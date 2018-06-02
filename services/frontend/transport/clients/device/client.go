@@ -12,6 +12,7 @@ import (
 	"github.com/go-kit/kit/ratelimit"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -40,7 +41,9 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) device.Service {
 	codec := devhttp.Codec{Route: routes.InitEndpoints(mux.NewRouter())}
 
 	// set-up our http transport options
-	options := []kithttp.ClientOption{}
+	options := []kithttp.ClientOption{
+		kitoc.HTTPClientTrace(),
+	}
 
 	// configure rate limiter
 	rl := rate.NewLimiter(rate.Every(time.Second), 1000)
@@ -73,7 +76,9 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) device.Service {
 // NewGRPC returns a new device client using the gRPC transport
 func NewGRPC(instancer sd.Instancer, logger log.Logger) device.Service {
 	// set-up our grpc transport options
-	options := []kitgrpc.ClientOption{}
+	options := []kitgrpc.ClientOption{
+		kitoc.GRPCClientTrace(),
+	}
 
 	// initialize our gRPC host mapper helper
 	hm := grpcconn.NewHostMapper(grpc.WithInsecure())

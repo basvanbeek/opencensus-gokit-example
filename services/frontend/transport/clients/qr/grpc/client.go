@@ -14,6 +14,7 @@ import (
 	"github.com/go-kit/kit/ratelimit"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/sony/gobreaker"
 	"golang.org/x/time/rate"
@@ -39,7 +40,9 @@ func New(instancer sd.Instancer, logger log.Logger) qr.Service {
 	// initialize our gRPC host mapper helper
 	hm := grpcconn.NewHostMapper(grpc.WithInsecure())
 
-	options := []kitgrpc.ClientOption{}
+	options := []kitgrpc.ClientOption{
+		kitoc.GRPCClientTrace(),
+	}
 
 	// makeEndpoint wires a QR service Go kit method endpoint
 	makeEndpoint := func(

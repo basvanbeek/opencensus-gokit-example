@@ -23,9 +23,12 @@ type client struct {
 }
 
 // NewClient returns a new event client using the Twirp transport.
-func NewClient(instancer kitsd.Instancer, logger log.Logger) event.Service {
+func NewClient(instancer kitsd.Instancer, c *http.Client, logger log.Logger) event.Service {
+	if c == nil {
+		c = &http.Client{}
+	}
 	return &client{
-		instancer: factory(instancer, logger),
+		instancer: factory(instancer, c, logger),
 		logger:    logger,
 	}
 }
@@ -145,10 +148,10 @@ func (c client) List(
 	return events, nil
 }
 
-func factory(instancer kitsd.Instancer, logger log.Logger) func() pb.Event {
+func factory(instancer kitsd.Instancer, client *http.Client, logger log.Logger) func() pb.Event {
 	return func() pb.Event {
 		factory := func(instance string) (interface{}, io.Closer, error) {
-			cl := pb.NewEventProtobufClient(instance, &http.Client{})
+			cl := pb.NewEventProtobufClient(instance, client)
 			return cl, nil, nil
 		}
 

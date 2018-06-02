@@ -17,6 +17,7 @@ import (
 	"github.com/go-kit/kit/sd/etcd"
 	"github.com/oklog/run"
 	uuid "github.com/satori/go.uuid"
+	"go.opencensus.io/plugin/ochttp"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
@@ -30,6 +31,7 @@ import (
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
 )
 
 func main() {
@@ -51,6 +53,9 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
+
+	// initialize our OpenCensus configuration
+	defer opencensus.Setup(frontend.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -80,7 +85,8 @@ func main() {
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 		}
-		evtClient := evtclient.NewTwirp(evtInstancer, logger)
+		httpClient := &http.Client{Transport: &ochttp.Transport{}}
+		evtClient := evtclient.NewTwirp(evtInstancer, httpClient, logger)
 
 		// create an instancer for the device client
 		devInstancer, err := etcd.NewInstancer(sdc, "/services/"+device.ServiceName+"/http", logger)
@@ -113,6 +119,10 @@ func main() {
 	// run.Group manages our goroutine lifecycles
 	// see: https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=15m45s
 	var g run.Group
+	{
+		// set-up our ZPages handler
+		opencensus.ZPages(g, logger)
+	}
 	{
 		// set-up our http transport
 		var (
