@@ -34,6 +34,9 @@ func main() {
 		instance = uuid.Must(uuid.NewV4())
 	)
 
+	// initialize our OpenCensus configuration and defer a clean-up
+	defer oc.Setup(qr.ServiceName).Close()
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -47,9 +50,6 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
-
-	// initialize our OpenCensus configuration
-	defer oc.Setup(qr.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")

@@ -37,6 +37,9 @@ func main() {
 		instance = uuid.Must(uuid.NewV4())
 	)
 
+	// initialize our OpenCensus configuration and defer a clean-up
+	defer oc.Setup(event.ServiceName).Close()
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -50,9 +53,6 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
-
-	// initialize our OpenCensus configuration
-	defer oc.Setup(event.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -78,14 +78,8 @@ func main() {
 	// Create our DB Connection Driver
 	var db *sqlx.DB
 	{
-		db, err = sqlx.Open("sqlite3", "event.db")
+		db, err = sqlx.Open("sqlite3", "event.db?_journal_mode=WAL")
 		if err != nil {
-			level.Error(logger).Log("exit", err)
-			os.Exit(-1)
-		}
-
-		// make sure the DB is in WAL mode
-		if _, err = db.Exec(`PRAGMA journal_mode=wal`); err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
 		}

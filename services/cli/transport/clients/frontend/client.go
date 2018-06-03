@@ -25,7 +25,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
 type client struct {
@@ -40,9 +40,6 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 
 	// set-up our http transport options
 	options := []kithttp.ClientOption{
-		kithttp.ClientBefore(
-			kithttp.SetRequestHeader("User-Agent", "go/ocg-cli/1.1"),
-		),
 		kitoc.HTTPClientTrace(), // add OpenCensus Client tracing
 	}
 
@@ -70,42 +67,42 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 		endpoints: transport.Endpoints{
 			Login: factory(instancer, "Login")(fehttp.NewFactory(
 				codec.Login,
-				opencensus.ChainMW("Login", mw), // chained custom method middleware
+				oc.ChainMW("Login", mw), // chained custom method middleware
 				options...,
 			)),
 			EventCreate: factory(instancer, "EventCreate")(fehttp.NewFactory(
 				codec.EventCreate,
-				opencensus.ChainMW("EventCreate", mw), // chained custom method middleware
+				oc.ChainMW("EventCreate", mw), // chained custom method middleware
 				options...,
 			)),
 			EventGet: factory(instancer, "EventGet")(fehttp.NewFactory(
 				codec.EventGet,
-				opencensus.ChainMW("EventGet", mw), // chained custom method middleware
+				oc.ChainMW("EventGet", mw), // chained custom method middleware
 				options...,
 			)),
 			EventUpdate: factory(instancer, "EventUpdate")(fehttp.NewFactory(
 				codec.EventUpdate,
-				opencensus.ChainMW("EventUpdate", mw), // chained custom method middleware
+				oc.ChainMW("EventUpdate", mw), // chained custom method middleware
 				options...,
 			)),
 			EventDelete: factory(instancer, "EventDelete")(fehttp.NewFactory(
 				codec.EventDelete,
-				opencensus.ChainMW("EventDelete", mw), // chained custom method middleware
+				oc.ChainMW("EventDelete", mw), // chained custom method middleware
 				options...,
 			)),
 			EventList: factory(instancer, "EventList")(fehttp.NewFactory(
 				codec.EventList,
-				opencensus.ChainMW("EventList", mw), // chained custom method middleware
+				oc.ChainMW("EventList", mw), // chained custom method middleware
 				options...,
 			)),
 			UnlockDevice: factory(instancer, "UnlockDevice")(fehttp.NewFactory(
 				codec.UnlockDevice,
-				opencensus.ChainMW("UnlockDevice", mw), // chained custom method middleware
+				oc.ChainMW("UnlockDevice", mw), // chained custom method middleware
 				options...,
 			)),
 			GenerateQR: factory(instancer, "GenerateQR")(fehttp.NewFactory(
 				codec.GenerateQR,
-				opencensus.ChainMW("GenerateQR", mw), // chained custom method middleware
+				oc.ChainMW("GenerateQR", mw), // chained custom method middleware
 				options...,
 			)),
 		},
@@ -283,6 +280,8 @@ func factory(instancer sd.Instancer, opName string) func(sd.Factory) endpoint.En
 		)
 		endpoint := lb.Retry(count, duration, balancer)
 
+		//endpoint = requestid.Endpoint(true)(endpoint)
+
 		return kitoc.TraceEndpoint(
 			"kit/retry "+opName,
 			kitoc.WithEndpointAttributes(
@@ -291,5 +290,6 @@ func factory(instancer sd.Instancer, opName string) func(sd.Factory) endpoint.En
 				trace.Int64Attribute("kit.retry.count", int64(count)),
 			),
 		)(endpoint)
+
 	}
 }

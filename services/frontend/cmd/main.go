@@ -40,6 +40,9 @@ func main() {
 		instance = uuid.Must(uuid.NewV4())
 	)
 
+	// initialize our OpenCensus configuration and defer a clean-up
+	defer oc.Setup(frontend.ServiceName).Close()
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -53,9 +56,6 @@ func main() {
 			"clr", log.DefaultCaller,
 		)
 	}
-
-	// initialize our OpenCensus configuration
-	defer oc.Setup(frontend.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -113,6 +113,7 @@ func main() {
 	var endpoints transport.Endpoints
 	{
 		endpoints = transport.MakeEndpoints(svc)
+
 		// trace our server side endpoints
 		endpoints = transport.Endpoints{
 			Login:        oc.ServerEndpoint("Login")(endpoints.Login),

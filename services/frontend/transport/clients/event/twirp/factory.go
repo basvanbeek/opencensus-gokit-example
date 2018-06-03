@@ -33,15 +33,6 @@ func NewClient(instancer kitsd.Instancer, c *http.Client, logger log.Logger) eve
 	}
 }
 
-// NewFactory returns a new client instance factory using the Twirp transport
-// for our event client.
-func NewFactory() sd.Factory {
-	return func(instance string) (interface{}, io.Closer, error) {
-		client := pb.NewEventProtobufClient(instance, &http.Client{})
-		return client, nil, nil
-	}
-}
-
 func (c client) Create(
 	ctx context.Context, tenantID uuid.UUID, event event.Event,
 ) (*uuid.UUID, error) {
@@ -149,16 +140,13 @@ func (c client) List(
 }
 
 func factory(instancer kitsd.Instancer, client *http.Client, logger log.Logger) func() pb.Event {
+	factoryFunc := func(instance string) (interface{}, io.Closer, error) {
+		return pb.NewEventProtobufClient(instance, client), nil, nil
+	}
+	clientInstancer := sd.NewClientInstancer(instancer, factoryFunc, logger)
+	balancer := sd.NewRoundRobin(clientInstancer)
+
 	return func() pb.Event {
-		factory := func(instance string) (interface{}, io.Closer, error) {
-			cl := pb.NewEventProtobufClient(instance, client)
-			return cl, nil, nil
-		}
-
-		clientInstancer := sd.NewClientInstancer(instancer, factory, logger)
-
-		balancer := sd.NewRoundRobin(clientInstancer)
-
 		client, err := balancer.Client()
 		if err != nil {
 			logger.Log("err", err)

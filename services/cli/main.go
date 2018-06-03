@@ -17,7 +17,7 @@ import (
 	// project
 	feclient "github.com/basvanbeek/opencensus-gokit-example/services/cli/transport/clients/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
 const (
@@ -30,8 +30,8 @@ func main() {
 		instance = uuid.Must(uuid.NewV4())
 	)
 
-	// initialize our OpenCensus configuration
-	defer opencensus.Setup(serviceName).Close()
+	// initialize our OpenCensus configuration and defer a clean-up
+	defer oc.Setup(serviceName).Close()
 
 	// initialize our structured logger for the service
 	var logger log.Logger
@@ -88,6 +88,10 @@ func main() {
 	}
 
 	{
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
 		ctx, span := trace.StartSpan(ctx, "Do EventCreate")
 		id, err := client.EventCreate(ctx, tenantID, frontend.Event{
 			Name: "Marine Corps Marathon",
@@ -103,6 +107,10 @@ func main() {
 	}
 
 	{
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
 		ctx, span := trace.StartSpan(ctx, "Do EventList")
 		events, err := client.EventList(ctx, tenantID)
 		fmt.Printf("\nCLIENT EVENT LIST:\nRES:%s\nERR: %+v\n\n", spew.Sdump(events), err)
