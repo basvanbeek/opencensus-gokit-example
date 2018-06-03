@@ -1,4 +1,4 @@
-package opencensus
+package oc
 
 import (
 	// stdlib

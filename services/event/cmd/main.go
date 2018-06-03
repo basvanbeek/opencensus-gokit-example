@@ -28,7 +28,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/event/transport/pb"
 	svcevent "github.com/basvanbeek/opencensus-gokit-example/services/event/transport/twirp"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// initialize our OpenCensus configuration
-	defer opencensus.Setup(event.ServiceName).Close()
+	defer oc.Setup(event.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -101,21 +101,15 @@ func main() {
 		}
 		svc = implementation.NewService(repository, logger)
 		// add service level middlewares here
-	}
 
-	// Create our Go kit endpoints for the Event Service
-	// var endpoints transport.Endpoints
-	// {
-	// 	endpoints = transport.MakeEndpoints(svc)
-	// 	// add endpoint level middlewares here
-	// }
+	}
 
 	// run.Group manages our goroutine lifecycles
 	// see: https://www.youtube.com/watch?v=LHe1Cb_Ud_M&t=15m45s
 	var g run.Group
 	{
 		// set-up our ZPages handler
-		opencensus.ZPages(g, logger)
+		oc.ZPages(g, logger)
 	}
 	{
 		// set-up our twirp transport

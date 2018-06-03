@@ -15,7 +15,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
-	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
@@ -31,7 +30,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc/pb"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
 func main() {
@@ -55,7 +54,7 @@ func main() {
 	}
 
 	// initialize our OpenCensus configuration
-	defer opencensus.Setup(device.ServiceName).Close()
+	defer oc.Setup(device.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -122,7 +121,7 @@ func main() {
 	{
 		endpoints = transport.MakeEndpoints(svc)
 		// add endpoint level middlewares here
-		endpoints.Unlock = kitoc.TraceEndpoint("UnlockEndpoint")(endpoints.Unlock)
+		endpoints.Unlock = oc.ServerEndpoint("UnlockEndpoint")(endpoints.Unlock)
 	}
 
 	// run.Group manages our goroutine lifecycles
@@ -130,7 +129,7 @@ func main() {
 	var g run.Group
 	{
 		// set-up our ZPages handler
-		opencensus.ZPages(g, logger)
+		oc.ZPages(g, logger)
 	}
 	{
 		// set-up our grpc transport

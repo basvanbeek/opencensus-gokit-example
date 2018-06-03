@@ -43,7 +43,6 @@ func NewFactory(
 		if err != nil {
 			return nil, nil, err
 		}
-
 		// set-up our go kit client endpoint
 		endpoint := kithttp.NewClient(
 			method, baseURL, enc, dec, options...,

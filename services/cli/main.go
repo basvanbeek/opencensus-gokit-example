@@ -73,7 +73,7 @@ func main() {
 
 	var tenantID uuid.UUID
 	{
-		ctx, span := trace.StartSpan(ctx, "LoginAppSpan")
+		ctx, span := trace.StartSpan(ctx, "Do Login")
 		details, err := client.Login(ctx, "john", "doe")
 		if err != nil {
 			span.SetStatus(trace.Status{trace.StatusCodeUnknown, err.Error()})
@@ -87,17 +87,23 @@ func main() {
 		tenantID = details.TenantID
 	}
 
-	// id, err := client.EventCreate(ctx, tenantID, frontend.Event{
-	// 	Name: "Marine Corps Marathon",
-	// })
-	// if err != nil {
-	// 	level.Error(logger).Log("msg", "event create failed", "exit", err)
-	// } else {
-	// 	level.Debug(logger).Log("msg", "event create succeeded", "id", id.String())
-	// }
+	{
+		ctx, span := trace.StartSpan(ctx, "Do EventCreate")
+		id, err := client.EventCreate(ctx, tenantID, frontend.Event{
+			Name: "Marine Corps Marathon",
+		})
+		if err != nil {
+			span.SetStatus(trace.Status{trace.StatusCodeUnknown, err.Error()})
+			level.Error(logger).Log("msg", "event create failed", "exit", err)
+		} else {
+			span.SetStatus(trace.Status{trace.StatusCodeOK, ""})
+			level.Debug(logger).Log("msg", "event create succeeded", "id", id.String())
+		}
+		span.End()
+	}
 
 	{
-		ctx, span := trace.StartSpan(ctx, "EventList")
+		ctx, span := trace.StartSpan(ctx, "Do EventList")
 		events, err := client.EventList(ctx, tenantID)
 		fmt.Printf("\nCLIENT EVENT LIST:\nRES:%s\nERR: %+v\n\n", spew.Sdump(events), err)
 		if err != nil {

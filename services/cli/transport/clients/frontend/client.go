@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/sony/gobreaker"
+	"go.opencensus.io/trace"
 	"golang.org/x/time/rate"
 
 	// project
@@ -24,6 +25,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
 )
 
 type client struct {
@@ -38,7 +40,10 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 
 	// set-up our http transport options
 	options := []kithttp.ClientOption{
-		kitoc.HTTPClientTrace(),
+		kithttp.ClientBefore(
+			kithttp.SetRequestHeader("User-Agent", "go/ocg-cli/1.1"),
+		),
+		kitoc.HTTPClientTrace(), // add OpenCensus Client tracing
 	}
 
 	// configure rate limiter
@@ -61,49 +66,46 @@ func NewHTTP(instancer sd.Instancer, logger log.Logger) frontend.Service {
 		circuitbreaker.Gobreaker(cb),
 	)
 
-	// initialize our factory handler
-	handler := factory(instancer)
-
 	return &client{
 		endpoints: transport.Endpoints{
-			Login: handler(fehttp.NewFactory(
+			Login: factory(instancer, "Login")(fehttp.NewFactory(
 				codec.Login,
-				endpoint.Chain(kitoc.TraceEndpoint("LoginEndpoint"), mw), // chained custom method middleware
+				opencensus.ChainMW("Login", mw), // chained custom method middleware
 				options...,
 			)),
-			EventCreate: handler(fehttp.NewFactory(
+			EventCreate: factory(instancer, "EventCreate")(fehttp.NewFactory(
 				codec.EventCreate,
-				endpoint.Chain(kitoc.TraceEndpoint("EventCreate"), mw), // chained custom method middleware
+				opencensus.ChainMW("EventCreate", mw), // chained custom method middleware
 				options...,
 			)),
-			EventGet: handler(fehttp.NewFactory(
+			EventGet: factory(instancer, "EventGet")(fehttp.NewFactory(
 				codec.EventGet,
-				endpoint.Chain(kitoc.TraceEndpoint("EventGet"), mw), // chained custom method middleware
+				opencensus.ChainMW("EventGet", mw), // chained custom method middleware
 				options...,
 			)),
-			EventUpdate: handler(fehttp.NewFactory(
+			EventUpdate: factory(instancer, "EventUpdate")(fehttp.NewFactory(
 				codec.EventUpdate,
-				endpoint.Chain(kitoc.TraceEndpoint("EventUpdate"), mw), // chained custom method middleware
+				opencensus.ChainMW("EventUpdate", mw), // chained custom method middleware
 				options...,
 			)),
-			EventDelete: handler(fehttp.NewFactory(
+			EventDelete: factory(instancer, "EventDelete")(fehttp.NewFactory(
 				codec.EventDelete,
-				endpoint.Chain(kitoc.TraceEndpoint("EventDelete"), mw), // chained custom method middleware
+				opencensus.ChainMW("EventDelete", mw), // chained custom method middleware
 				options...,
 			)),
-			EventList: handler(fehttp.NewFactory(
+			EventList: factory(instancer, "EventList")(fehttp.NewFactory(
 				codec.EventList,
-				endpoint.Chain(kitoc.TraceEndpoint("EventList"), mw), // chained custom method middleware
+				opencensus.ChainMW("EventList", mw), // chained custom method middleware
 				options...,
 			)),
-			UnlockDevice: handler(fehttp.NewFactory(
+			UnlockDevice: factory(instancer, "UnlockDevice")(fehttp.NewFactory(
 				codec.UnlockDevice,
-				endpoint.Chain(kitoc.TraceEndpoint("UnlockDevice"), mw), // chained custom method middleware
+				opencensus.ChainMW("UnlockDevice", mw), // chained custom method middleware
 				options...,
 			)),
-			GenerateQR: handler(fehttp.NewFactory(
+			GenerateQR: factory(instancer, "GenerateQR")(fehttp.NewFactory(
 				codec.GenerateQR,
-				endpoint.Chain(kitoc.TraceEndpoint("GenerateQR"), mw), // chained custom method middleware
+				opencensus.ChainMW("GenerateQR", mw), // chained custom method middleware
 				options...,
 			)),
 		},
@@ -265,7 +267,7 @@ func (c client) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unl
 }
 
 // factory creates a service discovery driven Go kit client endpoint
-func factory(instancer sd.Instancer) func(sd.Factory) endpoint.Endpoint {
+func factory(instancer sd.Instancer, opName string) func(sd.Factory) endpoint.Endpoint {
 	return func(factory sd.Factory) endpoint.Endpoint {
 		// endpointer manages list of available endpoints servicing our method
 		endpointer := sd.NewEndpointer(instancer, factory, log.NewNopLogger())
@@ -273,8 +275,21 @@ func factory(instancer sd.Instancer) func(sd.Factory) endpoint.Endpoint {
 		// balancer can do a random pick from the endpointer list
 		balancer := lb.NewRandom(endpointer, time.Now().UnixNano())
 
-		// retry uses balancer for executing a method call with retry and timeout
-		// logic so client consumer does not have to think about it.
-		return lb.Retry(3, 5*time.Second, balancer)
+		// retry uses balancer for executing a method call with retry and
+		// timeout logic so client consumer does not have to think about it.
+		var (
+			count    = 3
+			duration = 5 * time.Second
+		)
+		endpoint := lb.Retry(count, duration, balancer)
+
+		return kitoc.TraceEndpoint(
+			"kit/retry "+opName,
+			kitoc.WithEndpointAttributes(
+				trace.StringAttribute("kit.balancer.type", "random"),
+				trace.StringAttribute("kit.retry.timeout", duration.String()),
+				trace.Int64Attribute("kit.retry.count", int64(count)),
+			),
+		)(endpoint)
 	}
 }

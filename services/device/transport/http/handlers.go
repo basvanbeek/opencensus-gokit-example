@@ -27,10 +27,7 @@ func NewHTTPHandler(svcEndpoints transport.Endpoints, logger log.Logger) http.Ha
 		ocTracing     = kitoc.HTTPServerTrace()
 	)
 
-	// add OpenCensus tracing
-	options := []httptransport.ServerOption{
-		errorLogger, ocTracing,
-	}
+	options := []httptransport.ServerOption{errorLogger, ocTracing}
 
 	// wire our Go kit handlers to the http endpoints
 	httpEndpoints.Unlock.Handler(httptransport.NewServer(

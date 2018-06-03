@@ -31,7 +31,7 @@ import (
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/opencensus"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
 func main() {
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// initialize our OpenCensus configuration
-	defer opencensus.Setup(frontend.ServiceName).Close()
+	defer oc.Setup(frontend.ServiceName).Close()
 
 	level.Info(logger).Log("msg", "service started")
 	defer level.Info(logger).Log("msg", "service ended")
@@ -113,7 +113,17 @@ func main() {
 	var endpoints transport.Endpoints
 	{
 		endpoints = transport.MakeEndpoints(svc)
-		// add endpoint level middlewares here
+		// trace our server side endpoints
+		endpoints = transport.Endpoints{
+			Login:        oc.ServerEndpoint("Login")(endpoints.Login),
+			EventCreate:  oc.ServerEndpoint("EventCreate")(endpoints.EventCreate),
+			EventGet:     oc.ServerEndpoint("EventGet")(endpoints.EventGet),
+			EventUpdate:  oc.ServerEndpoint("EventUpdate")(endpoints.EventUpdate),
+			EventDelete:  oc.ServerEndpoint("EventDelete")(endpoints.EventDelete),
+			EventList:    oc.ServerEndpoint("EventList")(endpoints.EventList),
+			UnlockDevice: oc.ServerEndpoint("UnlockDevice")(endpoints.UnlockDevice),
+			GenerateQR:   oc.ServerEndpoint("GenerateQR")(endpoints.GenerateQR),
+		}
 	}
 
 	// run.Group manages our goroutine lifecycles
@@ -121,7 +131,7 @@ func main() {
 	var g run.Group
 	{
 		// set-up our ZPages handler
-		opencensus.ZPages(g, logger)
+		oc.ZPages(g, logger)
 	}
 	{
 		// set-up our http transport

@@ -27,10 +27,12 @@ type grpcServer struct {
 
 // NewGRPCServer returns a new gRPC service for the provided Go kit endpoints
 func NewGRPCServer(endpoints transport.Endpoints, logger log.Logger) pb.DeviceServer {
-	options := []grpctransport.ServerOption{
-		grpctransport.ServerErrorLogger(logger),
-		kitoc.GRPCServerTrace(),
-	}
+	var (
+		errorLogger = grpctransport.ServerErrorLogger(logger)
+		ocTracing   = kitoc.GRPCServerTrace()
+	)
+
+	options := []grpctransport.ServerOption{errorLogger, ocTracing}
 
 	return &grpcServer{
 		unlock: grpctransport.NewServer(
