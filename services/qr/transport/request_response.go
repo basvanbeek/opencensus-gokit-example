@@ -17,3 +17,6 @@ type GenerateResponse struct {
 	QR  []byte
 	Err error
 }
+
+// Failed implements Failer.
+func (r *GenerateResponse) Failed() error { return r.Err }

@@ -32,8 +32,10 @@ func (s *service) Generate(
 	var (
 		logger = log.With(s.logger, "method", "Generate")
 	)
-
 	// test for valid input
+	if len(url) == 0 {
+		return nil, qr.ErrNoContent
+	}
 	if recLevel < qr.LevelL || recLevel > qr.LevelH {
 		return nil, qr.ErrInvalidRecoveryLevel
 	}
@@ -45,9 +47,15 @@ func (s *service) Generate(
 	if err != nil {
 		// actual qrcode lib error... log it...
 		level.Error(logger).Log("err", err)
+
 		// consumer of this api gets a generic error returned so we don't leak
 		// implementation details upstream
-		err = qr.ErrGenerate
+		switch err.Error() {
+		case "content too long to encode", "length too long to be represented":
+			err = qr.ErrContentTooLarge
+		default:
+			err = qr.ErrGenerate
+		}
 	}
 
 	return b, err

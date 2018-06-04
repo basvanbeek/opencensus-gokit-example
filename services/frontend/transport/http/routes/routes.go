@@ -17,8 +17,8 @@ type Endpoints struct {
 	GenerateQR   *mux.Route
 }
 
-// InitEndpoints wires the HTTP endpoints to our Go kit service endpoints.
-func InitEndpoints(router *mux.Router) Endpoints {
+// Initialize wires the HTTP endpoints to our Go kit service endpoints.
+func Initialize(router *mux.Router) Endpoints {
 	return Endpoints{
 		Login: router.
 			Methods("POST").

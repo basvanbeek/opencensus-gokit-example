@@ -17,6 +17,7 @@ import (
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/sony/gobreaker"
+	"go.opencensus.io/trace"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -27,6 +28,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/pb"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
 // client grpc transport to QR service.
@@ -40,14 +42,16 @@ func New(instancer sd.Instancer, logger log.Logger) qr.Service {
 	// initialize our gRPC host mapper helper
 	hm := grpcconn.NewHostMapper(grpc.WithInsecure())
 
+	// Set our Go kit gRPC client options
 	options := []kitgrpc.ClientOption{
-		kitoc.GRPCClientTrace(),
+		kitoc.GRPCClientTrace(), // OpenCensus Go kit gRPC client tracing
 	}
 
 	// makeEndpoint wires a QR service Go kit method endpoint
 	makeEndpoint := func(
 		method string, reply interface{},
 		enc kitgrpc.EncodeRequestFunc, dec kitgrpc.DecodeResponseFunc,
+		decError endpoint.Middleware,
 	) endpoint.Endpoint {
 
 		// configure circuit breaker
@@ -76,8 +80,16 @@ func New(instancer sd.Instancer, logger log.Logger) qr.Service {
 			// set-up our go kit client endpoint
 			var e endpoint.Endpoint
 			e = kitgrpc.NewClient(conn, "pb.QR", method, enc, dec, reply, options...).Endpoint()
-			e = ratelimit.NewErroringLimiter(rl)(e)
-			e = circuitbreaker.Gobreaker(cb)(e)
+			if decError != nil {
+				// we have a custom gRPC error router
+				e = decError(e)
+			}
+
+			mw := endpoint.Chain(
+				ratelimit.NewErroringLimiter(rl),
+				circuitbreaker.Gobreaker(cb),
+			)
+			e = oc.ChainMW(method, mw)(e)
 
 			return e, closer, nil
 		}
@@ -90,14 +102,32 @@ func New(instancer sd.Instancer, logger log.Logger) qr.Service {
 
 		// retry uses balancer for executing a method call with retry and timeout
 		// logic so client consumer does not have to think about it.
-		retry := lb.Retry(3, 5*time.Second, balancer)
-		return retry
+		var (
+			count    = 3
+			duration = 5 * time.Second
+		)
+		endpoint := lb.Retry(count, duration, balancer)
+
+		return kitoc.TraceEndpoint(
+			"kit/retry"+method,
+			kitoc.WithEndpointAttributes(
+				trace.StringAttribute("kit.balancer.type", "round robin"),
+				trace.StringAttribute("kit.retry.timeout", duration.String()),
+				trace.Int64Attribute("kit.retry.count", int64(count)),
+			),
+		)(endpoint)
 	}
 
 	// create our QR client by initializing all method endpoints
 	return client{
 		endpoints: transport.Endpoints{
-			Generate: makeEndpoint("Generate", pb.GenerateResponse{}, encodeGenerateRequest, decodeGenerateResponse),
+			Generate: makeEndpoint(
+				"Generate",
+				pb.GenerateResponse{},
+				encodeGenerateRequest,
+				decodeGenerateResponse,
+				decodeGenerateError(),
+			),
 		},
 		logger: logger,
 	}
@@ -108,6 +138,9 @@ func (c client) Generate(
 	ctx context.Context, data string, recLevel qr.RecoveryLevel, size int,
 ) ([]byte, error) {
 	// we can also validate parameters before sending the request
+	if len(data) == 0 {
+		return nil, qr.ErrNoContent
+	}
 	if recLevel < qr.LevelL || recLevel > qr.LevelH {
 		return nil, qr.ErrInvalidRecoveryLevel
 	}
@@ -120,15 +153,11 @@ func (c client) Generate(
 		ctx,
 		transport.GenerateRequest{Data: data, Level: recLevel, Size: size},
 	)
-	gErr := status.Convert(err)
-	switch gErr.Code() {
-	case codes.Unknown:
-		return nil, errors.New(gErr.Message())
-	case codes.InvalidArgument:
-		return nil, errors.New(gErr.Message())
+	if err != nil {
+		return nil, err
 	}
 	response := res.(transport.GenerateResponse)
-	return response.QR, nil
+	return response.QR, response.Err
 }
 
 // encodeGenerateRequest encodes the outgoing go kit payload to the grpc payload
@@ -145,4 +174,27 @@ func encodeGenerateRequest(_ context.Context, request interface{}) (interface{},
 func decodeGenerateResponse(_ context.Context, response interface{}) (interface{}, error) {
 	resp := response.(*pb.GenerateResponse)
 	return transport.GenerateResponse{QR: resp.Image}, nil
+}
+
+func decodeGenerateError() endpoint.Middleware {
+	return func(e endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (interface{}, error) {
+			// call our gRPC client endpoint
+			response, err := e(ctx, request)
+			// check error response
+			st, _ := status.FromError(err)
+			switch st.Code() {
+			case codes.OK:
+				// no error encountered... proceed with regular response payload
+				return response, nil
+			case codes.InvalidArgument, codes.FailedPrecondition:
+				// business logic error which should not be retried or trigger
+				// the circuitbreaker.
+				return transport.GenerateResponse{Err: errors.New(st.Message())}, nil
+			default:
+				// error which might invoke a retry or trigger a circuitbreaker
+				return nil, errors.New(st.Message())
+			}
+		}
+	}
 }

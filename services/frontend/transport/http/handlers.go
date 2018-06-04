@@ -22,10 +22,10 @@ import (
 func NewHTTPHandler(svcEndpoints transport.Endpoints, logger log.Logger) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
-		router        = mux.NewRouter()
-		httpEndpoints = routes.InitEndpoints(router)
-		errorLogger   = httptransport.ServerErrorLogger(logger)
-		ocTracing     = kitoc.HTTPServerTrace()
+		router      = mux.NewRouter()
+		route       = routes.Initialize(router)
+		errorLogger = httptransport.ServerErrorLogger(logger)
+		ocTracing   = kitoc.HTTPServerTrace()
 	)
 
 	options := []httptransport.ServerOption{
@@ -33,42 +33,42 @@ func NewHTTPHandler(svcEndpoints transport.Endpoints, logger log.Logger) http.Ha
 	}
 
 	// wire our Go kit handlers to the http endpoints
-	httpEndpoints.Login.Handler(httptransport.NewServer(
+	route.Login.Handler(httptransport.NewServer(
 		svcEndpoints.Login, decodeLoginRequest, encodeLoginResponse,
 		options...,
 	))
 
-	httpEndpoints.EventCreate.Handler(httptransport.NewServer(
+	route.EventCreate.Handler(httptransport.NewServer(
 		svcEndpoints.EventCreate, decodeEventCreateRequest, encodeEventCreateResponse,
 		options...,
 	))
 
-	httpEndpoints.EventGet.Handler(httptransport.NewServer(
+	route.EventGet.Handler(httptransport.NewServer(
 		svcEndpoints.EventGet, decodeEventGetRequest, encodeEventGetResponse,
 		options...,
 	))
 
-	httpEndpoints.EventUpdate.Handler(httptransport.NewServer(
+	route.EventUpdate.Handler(httptransport.NewServer(
 		svcEndpoints.EventUpdate, decodeEventUpdateRequest, encodeEventUpdateResponse,
 		options...,
 	))
 
-	httpEndpoints.EventDelete.Handler(httptransport.NewServer(
+	route.EventDelete.Handler(httptransport.NewServer(
 		svcEndpoints.EventDelete, decodeEventDeleteRequest, encodeEventDeleteResponse,
 		options...,
 	))
 
-	httpEndpoints.EventList.Handler(httptransport.NewServer(
+	route.EventList.Handler(httptransport.NewServer(
 		svcEndpoints.EventList, decodeEventListRequest, encodeEventListResponse,
 		options...,
 	))
 
-	httpEndpoints.UnlockDevice.Handler(httptransport.NewServer(
+	route.UnlockDevice.Handler(httptransport.NewServer(
 		svcEndpoints.UnlockDevice, decodeUnlockDeviceRequest, encodeUnlockDeviceResponse,
 		options...,
 	))
 
-	httpEndpoints.GenerateQR.Handler(httptransport.NewServer(
+	route.GenerateQR.Handler(httptransport.NewServer(
 		svcEndpoints.GenerateQR, decodeGenerateQRRequest, encodeGenerateQRResponse,
 		options...,
 	))

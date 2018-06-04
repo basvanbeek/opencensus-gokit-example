@@ -24,7 +24,7 @@ func ZPages(g run.Group, logger log.Logger) {
 	)
 
 	g.Add(func() error {
-		level.Info(logger).Log("msg", "zpage started", "addr", "http://"+addr)
+		level.Info(logger).Log("msg", "zpages started", "addr", "http://"+addr)
 		return http.Serve(listener, zpages.Handler)
 	}, func(error) {
 		listener.Close()

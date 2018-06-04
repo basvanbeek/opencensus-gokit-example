@@ -68,7 +68,7 @@ func main() {
 			level.Error(logger).Log("exit", err)
 		}
 
-		client = feclient.NewHTTP(instancer, logger)
+		client = feclient.NewHTTPClient(instancer, logger)
 	}
 
 	var tenantID uuid.UUID

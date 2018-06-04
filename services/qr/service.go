@@ -20,6 +20,8 @@ type Service interface {
 var (
 	ErrInvalidRecoveryLevel = errors.New("invalid recovery level requested")
 	ErrInvalidSize          = errors.New("invalid size requested")
+	ErrNoContent            = errors.New("content can't be empty")
+	ErrContentTooLarge      = errors.New("content size too large")
 	ErrGenerate             = errors.New("unable to generate QR")
 )
 

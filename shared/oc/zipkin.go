@@ -26,5 +26,4 @@ func setupZipkin(serviceName string) (trace.Exporter, io.Closer) {
 	localEndpoint, _ := zipkin.NewEndpoint(serviceName, addr)
 
 	return oczipkin.NewExporter(rep, localEndpoint), rep
-
 }

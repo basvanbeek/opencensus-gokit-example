@@ -1,11 +1,12 @@
 package oc
 
 import (
-	// external
+	// stdlib
 	"errors"
 	"io"
 	"strings"
 
+	// external
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 )
