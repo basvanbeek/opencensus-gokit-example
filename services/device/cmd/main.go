@@ -15,6 +15,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
@@ -156,13 +158,15 @@ func main() {
 	{
 		// set-up our http transport
 		var (
-			service      = svchttp.NewHTTPHandler(endpoints, logger)
-			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			svcInstance  = fmt.Sprintf("/services/%s/http/%s/", device.ServiceName, instance)
-			addr         = "http://" + listener.Addr().String()
-			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
-			serviceEntry = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
-			registrar    = etcd.NewRegistrar(sdc, serviceEntry, logger)
+			ocTracing     = kitoc.HTTPServerTrace()
+			serverOptions = []httptransport.ServerOption{ocTracing}
+			service       = svchttp.NewHTTPHandler(endpoints, serverOptions, logger)
+			listener, _   = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			svcInstance   = fmt.Sprintf("/services/%s/http/%s/", device.ServiceName, instance)
+			addr          = "http://" + listener.Addr().String()
+			ttl           = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			serviceEntry  = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
+			registrar     = etcd.NewRegistrar(sdc, serviceEntry, logger)
 		)
 
 		g.Add(func() error {

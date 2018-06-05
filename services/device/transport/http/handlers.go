@@ -8,7 +8,6 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 
@@ -18,16 +17,18 @@ import (
 )
 
 // NewHTTPHandler wires our Go kit endpoints to the HTTP transport.
-func NewHTTPHandler(svcEndpoints transport.Endpoints, logger log.Logger) http.Handler {
+func NewHTTPHandler(
+	svcEndpoints transport.Endpoints, options []httptransport.ServerOption,
+	logger log.Logger,
+) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
 		router      = mux.NewRouter()
 		route       = routes.Initialize(router)
 		errorLogger = httptransport.ServerErrorLogger(logger)
-		ocTracing   = kitoc.HTTPServerTrace()
 	)
 
-	options := []httptransport.ServerOption{errorLogger, ocTracing}
+	options = append(options, errorLogger)
 
 	// wire our Go kit handlers to the http endpoints
 	route.Unlock.Handler(httptransport.NewServer(

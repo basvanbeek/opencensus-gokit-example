@@ -14,6 +14,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
+	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/oklog/run"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
@@ -99,15 +101,17 @@ func main() {
 	{
 		// set-up our grpc transport
 		var (
-			bindIP, _    = network.HostIP()
-			qrService    = svcgrpc.NewGRPCServer(endpoints, logger)
-			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			svcInstance  = fmt.Sprintf("/services/%s/grpc/%s/", qr.ServiceName, instance)
-			addr         = listener.Addr().String()
-			ttl          = etcd.NewTTLOption(3*time.Second, 10*time.Second)
-			serviceEntry = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
-			registrar    = etcd.NewRegistrar(sdc, serviceEntry, logger)
-			grpcServer   = grpc.NewServer()
+			bindIP, _     = network.HostIP()
+			ocTracing     = kitoc.GRPCServerTrace()
+			serverOptions = []kitgrpc.ServerOption{ocTracing}
+			qrService     = svcgrpc.NewGRPCServer(endpoints, serverOptions, logger)
+			listener, _   = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			svcInstance   = fmt.Sprintf("/services/%s/grpc/%s/", qr.ServiceName, instance)
+			addr          = listener.Addr().String()
+			ttl           = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			serviceEntry  = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
+			registrar     = etcd.NewRegistrar(sdc, serviceEntry, logger)
+			grpcServer    = grpc.NewServer()
 		)
 		pb.RegisterQRServer(grpcServer, qrService)
 

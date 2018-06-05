@@ -15,6 +15,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
@@ -176,19 +178,21 @@ func main() {
 	{
 		// set-up our http transport
 		var (
-			bindIP, _       = network.HostIP()
-			frontendService = fesvchttp.NewHTTPHandler(endpoints, logger)
-			listener, _     = net.Listen("tcp", bindIP+":0")                                       // dynamic port assignment
-			svcInstance     = fmt.Sprintf("/services/%s/http/%s/", frontend.ServiceName, instance) // monolith is basically frontend service but with all micro service backend logic embedded
-			addr            = "http://" + listener.Addr().String()
-			ttl             = etcd.NewTTLOption(3*time.Second, 10*time.Second)
-			service         = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
-			registrar       = etcd.NewRegistrar(sdc, service, logger)
+			bindIP, _     = network.HostIP()
+			listener, _   = net.Listen("tcp", bindIP+":0")                                       // dynamic port assignment
+			svcInstance   = fmt.Sprintf("/services/%s/http/%s/", frontend.ServiceName, instance) // monolith is basically frontend service but with all micro service backend logic embedded
+			addr          = "http://" + listener.Addr().String()
+			ttl           = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			service       = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
+			registrar     = etcd.NewRegistrar(sdc, service, logger)
+			ocTracing     = kitoc.HTTPServerTrace()
+			serverOptions = []httptransport.ServerOption{ocTracing}
+			feService     = fesvchttp.NewHTTPHandler(endpoints, serverOptions, logger)
 		)
 
 		g.Add(func() error {
 			registrar.Register()
-			return http.Serve(listener, frontendService)
+			return http.Serve(listener, feService)
 		}, func(error) {
 			registrar.Deregister()
 			listener.Close()

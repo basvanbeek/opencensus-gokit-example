@@ -15,6 +15,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
+	kitoc "github.com/go-kit/kit/tracing/opencensus"
+	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/oklog/run"
 	uuid "github.com/satori/go.uuid"
 	"go.opencensus.io/plugin/ochttp"
@@ -137,14 +139,16 @@ func main() {
 	{
 		// set-up our http transport
 		var (
-			bindIP, _   = network.HostIP()
-			listener, _ = net.Listen("tcp", bindIP+":0") // dynamic port assignment
-			svcInstance = fmt.Sprintf("/services/%s/http/%s/", frontend.ServiceName, instance)
-			addr        = "http://" + listener.Addr().String()
-			ttl         = etcd.NewTTLOption(3*time.Second, 10*time.Second)
-			service     = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
-			registrar   = etcd.NewRegistrar(sdc, service, logger)
-			feService   = svchttp.NewHTTPHandler(endpoints, logger)
+			bindIP, _     = network.HostIP()
+			listener, _   = net.Listen("tcp", bindIP+":0") // dynamic port assignment
+			svcInstance   = fmt.Sprintf("/services/%s/http/%s/", frontend.ServiceName, instance)
+			addr          = "http://" + listener.Addr().String()
+			ttl           = etcd.NewTTLOption(3*time.Second, 10*time.Second)
+			service       = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
+			registrar     = etcd.NewRegistrar(sdc, service, logger)
+			ocTracing     = kitoc.HTTPServerTrace()
+			serverOptions = []httptransport.ServerOption{ocTracing}
+			feService     = svchttp.NewHTTPHandler(endpoints, serverOptions, logger)
 		)
 
 		g.Add(func() error {
