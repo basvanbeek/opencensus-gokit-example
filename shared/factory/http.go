@@ -21,6 +21,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/sony/gobreaker"
+	"go.opencensus.io/trace"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
@@ -66,12 +67,14 @@ func CreateHTTPEndpoint(
 		)
 
 		// middleware to trace our client endpoint
-		tr := oc.ClientEndpoint(operationName)
+		tr := oc.ClientEndpoint(
+			operationName, trace.StringAttribute("peer.address", instance),
+		)
 
-		// chain our middlewares
-		middleware = endpoint.Chain(cb, tr, middleware)
+		// chain our middlewares and wrap our endpoint
+		clientEndpoint = endpoint.Chain(cb, tr, middleware)(clientEndpoint)
 
-		return middleware(clientEndpoint), nil, nil
+		return clientEndpoint, nil, nil
 	}
 
 	// endpoints manages the list of available endpoints servicing our method

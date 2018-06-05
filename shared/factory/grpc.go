@@ -14,6 +14,7 @@ import (
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/sony/gobreaker"
+	"go.opencensus.io/trace"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
@@ -22,7 +23,7 @@ import (
 
 // CreateGRPCEndpoint wires a QR service Go kit method endpoint
 func CreateGRPCEndpoint(
-	instancer sd.Instancer, hm grpcconn.HostMapper,
+	instancer sd.Instancer, hm grpcconn.HostMapper, service string,
 	middleware endpoint.Middleware, method string, reply interface{},
 	enc kitgrpc.EncodeRequestFunc, dec kitgrpc.DecodeResponseFunc,
 	decError endpoint.Middleware,
@@ -43,7 +44,7 @@ func CreateGRPCEndpoint(
 
 		// set-up our Go kit client endpoint
 		clientEndpoint := kitgrpc.NewClient(
-			conn, "pb.QR", method, enc, dec, reply, options...,
+			conn, service, method, enc, dec, reply, options...,
 		).Endpoint()
 
 		if decError != nil {
@@ -54,7 +55,6 @@ func CreateGRPCEndpoint(
 		// configure circuit breaker
 		cb := circuitbreaker.Gobreaker(
 			gobreaker.NewCircuitBreaker(gobreaker.Settings{
-				Name:        "QR/grpc/" + method,
 				MaxRequests: 5,
 				Interval:    10 * time.Second,
 				Timeout:     10 * time.Second,
@@ -65,12 +65,14 @@ func CreateGRPCEndpoint(
 		)
 
 		// middleware to trace our client endpoint
-		tr := oc.ClientEndpoint(method)
+		tr := oc.ClientEndpoint(
+			method, trace.StringAttribute("peer.address", instance),
+		)
 
-		// chain our middlewares
-		middleware = endpoint.Chain(cb, tr, middleware)
+		// chain our middlewares and wrap our endpoint
+		clientEndpoint = endpoint.Chain(cb, tr, middleware)(clientEndpoint)
 
-		return middleware(clientEndpoint), closer, nil
+		return clientEndpoint, closer, nil
 	}
 
 	// endpointer manages list of available endpoints servicing our method

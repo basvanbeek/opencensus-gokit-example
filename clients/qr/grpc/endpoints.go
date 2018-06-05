@@ -42,6 +42,7 @@ func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoint
 		Generate: factory.CreateGRPCEndpoint(
 			instancer,
 			hm,
+			"pb.QR",
 			middlewares,
 			"Generate",
 			pb.GenerateResponse{},

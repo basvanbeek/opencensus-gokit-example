@@ -21,23 +21,25 @@ const (
 
 // ClientEndpoint adds our Endpoint Tracing middleware to the existing client
 // side endpoint.
-func ClientEndpoint(operationName string) endpoint.Middleware {
+func ClientEndpoint(operationName string, attrs ...trace.Attribute) endpoint.Middleware {
+	attrs = append(
+		attrs, trace.StringAttribute("gokit.endpoint.type", "client"),
+	)
 	return kitoc.TraceEndpoint(
 		"gokit/endpoint "+operationName,
-		kitoc.WithEndpointAttributes(
-			trace.StringAttribute("gokit.endpoint.type", "client"),
-		),
+		kitoc.WithEndpointAttributes(attrs...),
 	)
 }
 
 // ServerEndpoint adds our Endpoint Tracing middleware to the existing server
 // side endpoint.
-func ServerEndpoint(operationName string) endpoint.Middleware {
+func ServerEndpoint(operationName string, attrs ...trace.Attribute) endpoint.Middleware {
+	attrs = append(
+		attrs, trace.StringAttribute("gokit.endpoint.type", "server"),
+	)
 	return kitoc.TraceEndpoint(
 		"gokit/endpoint "+operationName,
-		kitoc.WithEndpointAttributes(
-			trace.StringAttribute("gokit.endpoint.type", "server"),
-		),
+		kitoc.WithEndpointAttributes(attrs...),
 	)
 }
 

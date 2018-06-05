@@ -44,6 +44,7 @@ func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoint
 		Unlock: factory.CreateGRPCEndpoint(
 			instancer,
 			hm,
+			"pb.Device",
 			middlewares,
 			"Unlock",
 			pb.UnlockResponse{},

@@ -3,8 +3,6 @@ package implementation
 import (
 	// stdlib
 	"context"
-	"fmt"
-	"sync/atomic"
 
 	// external
 	"github.com/go-kit/kit/log"
@@ -47,13 +45,6 @@ func (s *service) Create(
 		level.Error(s.logger).Log("err", err)
 		return nil, event.ErrService
 	case database.ErrNameExists:
-		// HACK:test retry logic
-		i := atomic.AddInt32(&s.i, 1)
-		fmt.Printf("WE HAVE: %d [%d]\n", i, i%3)
-		if i%3 == 0 {
-			id := uuid.Must(uuid.NewV4())
-			return &id, nil
-		}
 		level.Debug(s.logger).Log("err", err)
 		return nil, event.ErrEventExists
 	default:
