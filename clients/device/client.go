@@ -25,8 +25,8 @@ func NewHTTPClient(instancer sd.Instancer, logger log.Logger) device.Service {
 	}
 }
 
-// NewGRPC returns a new device client using the gRPC transport
-func NewGRPC(instancer sd.Instancer, logger log.Logger) device.Service {
+// NewGRPCClient returns a new device client using the gRPC transport
+func NewGRPCClient(instancer sd.Instancer, logger log.Logger) device.Service {
 	return &client{
 		endpoints: grpc.InitEndpoints(instancer, logger),
 		logger:    logger,
