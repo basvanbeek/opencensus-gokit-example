@@ -1,4 +1,4 @@
-package httpclient
+package http
 
 import (
 	// stdlib
@@ -16,6 +16,7 @@ import (
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/factory"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/loggermw"
 )
 
@@ -37,60 +38,60 @@ func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoint
 
 	// create our client endpoints
 	return transport.Endpoints{
-		Login: createEndpoint(
+		Login: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"Login",
-			route.Login,
+			factory.EncodeGenericRequest(route.Login),
 			decodeLoginResponse,
 		),
-		EventCreate: createEndpoint(
+		EventCreate: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"EventCreate",
-			route.EventCreate,
+			factory.EncodeGenericRequest(route.EventCreate),
 			decodeEventCreateResponse,
 		),
-		EventGet: createEndpoint(
+		EventGet: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"EventGet",
-			route.EventGet,
+			factory.EncodeGenericRequest(route.EventGet),
 			decodeEventGetResponse,
 		),
-		EventUpdate: createEndpoint(
+		EventUpdate: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"EventUpdate",
-			route.EventUpdate,
+			factory.EncodeGenericRequest(route.EventUpdate),
 			decodeEventUpdateResponse,
 		),
-		EventDelete: createEndpoint(
+		EventDelete: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"EventDelete",
-			route.EventDelete,
+			factory.EncodeGenericRequest(route.EventDelete),
 			decodeEventDeleteResponse,
 		),
-		EventList: createEndpoint(
+		EventList: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"EventList",
-			route.EventList,
+			factory.EncodeGenericRequest(route.EventList),
 			decodeEventListResponse,
 		),
-		UnlockDevice: createEndpoint(
+		UnlockDevice: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"UnlockDevice",
-			route.UnlockDevice,
+			factory.EncodeGenericRequest(route.UnlockDevice),
 			decodeUnlockDeviceResponse,
 		),
-		GenerateQR: createEndpoint(
+		GenerateQR: factory.CreateHTTPEndpoint(
 			instancer,
 			middlewares,
 			"GenerateQR",
-			route.GenerateQR,
+			factory.EncodeGenericRequest(route.GenerateQR),
 			decodeGenerateQRResponse,
 		),
 	}

@@ -16,7 +16,7 @@ import (
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc/pb"
+	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/pb"
 )
 
 // grpc transport service for QR service.

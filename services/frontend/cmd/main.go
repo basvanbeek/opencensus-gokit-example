@@ -95,7 +95,7 @@ func main() {
 		}
 
 		// initialize our Device client using http transport
-		devClient := devclient.NewHTTP(devInstancer, logger)
+		devClient := devclient.NewHTTPClient(devInstancer, logger)
 
 		// create an instancer for the QR client
 		qrInstancer, err := etcd.NewInstancer(sdc, "/services/"+qr.ServiceName+"/grpc", logger)

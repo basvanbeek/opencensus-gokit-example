@@ -1,14 +1,18 @@
-package grpcclient
+package grpc
 
 import (
+	// stdlib
 	"context"
 	"errors"
 
-	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/pb"
+	// external
 	"github.com/go-kit/kit/endpoint"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	// project
+	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport"
+	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/pb"
 )
 
 // encodeGenerateRequest encodes the outgoing go kit payload to the grpc payload

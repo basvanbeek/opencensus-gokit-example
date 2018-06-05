@@ -21,16 +21,16 @@ import (
 func NewHTTPHandler(svcEndpoints transport.Endpoints, logger log.Logger) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
-		router        = mux.NewRouter()
-		httpEndpoints = routes.InitEndpoints(router)
-		errorLogger   = httptransport.ServerErrorLogger(logger)
-		ocTracing     = kitoc.HTTPServerTrace()
+		router      = mux.NewRouter()
+		route       = routes.Initialize(router)
+		errorLogger = httptransport.ServerErrorLogger(logger)
+		ocTracing   = kitoc.HTTPServerTrace()
 	)
 
 	options := []httptransport.ServerOption{errorLogger, ocTracing}
 
 	// wire our Go kit handlers to the http endpoints
-	httpEndpoints.Unlock.Handler(httptransport.NewServer(
+	route.Unlock.Handler(httptransport.NewServer(
 		svcEndpoints.Unlock, decodeUnlockRequest, encodeUnlockResponse,
 		options...,
 	))

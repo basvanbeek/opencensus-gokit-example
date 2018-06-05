@@ -1,17 +1,11 @@
-package httpclient
+package http
 
 import (
 	// stdlib
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
-
-	// external
-	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/gorilla/mux"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
@@ -103,26 +97,4 @@ func decodeGenerateQRResponse(_ context.Context, r *http.Response) (interface{},
 	var resp transport.GenerateQRResponse
 	err := json.NewDecoder(r.Body).Decode(&resp)
 	return resp, err
-}
-
-func encodeGenericRequest(route *mux.Route) kithttp.EncodeRequestFunc {
-	return func(_ context.Context, r *http.Request, request interface{}) error {
-		var (
-			err error
-			buf bytes.Buffer
-		)
-
-		if r.URL, err = route.Host(r.URL.Host).URL(); err != nil {
-			return err
-		}
-		if methods, err := route.GetMethods(); err == nil {
-			r.Method = methods[0]
-		}
-
-		if err := json.NewEncoder(&buf).Encode(request); err != nil {
-			return err
-		}
-		r.Body = ioutil.NopCloser(&buf)
-		return nil
-	}
 }

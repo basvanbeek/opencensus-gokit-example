@@ -18,7 +18,7 @@ import (
 // NewHTTPClient returns a new frontend client using the HTTP transport.
 func NewHTTPClient(instancer sd.Instancer, logger log.Logger) frontend.Service {
 	return &client{
-		endpoints: httpclient.InitEndpoints(instancer, logger),
+		endpoints: http.InitEndpoints(instancer, logger),
 		logger:    logger,
 	}
 }

@@ -27,8 +27,8 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc"
-	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc/pb"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http"
+	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/pb"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )

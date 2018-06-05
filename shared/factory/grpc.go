@@ -1,4 +1,4 @@
-package grpcclient
+package factory
 
 import (
 	// stdlib
@@ -20,10 +20,10 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
-// createEndpoint wires a QR service Go kit method endpoint
-func createEndpoint(
-	instancer sd.Instancer, hm grpcconn.HostMapper, middleware endpoint.Middleware,
-	method string, reply interface{},
+// CreateGRPCEndpoint wires a QR service Go kit method endpoint
+func CreateGRPCEndpoint(
+	instancer sd.Instancer, hm grpcconn.HostMapper,
+	middleware endpoint.Middleware, method string, reply interface{},
 	enc kitgrpc.EncodeRequestFunc, dec kitgrpc.DecodeResponseFunc,
 	decError endpoint.Middleware,
 ) endpoint.Endpoint {

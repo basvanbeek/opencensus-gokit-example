@@ -1,8 +1,13 @@
-package httpclient
+package factory
 
 import (
 	// stdlib
+	"bytes"
+	"context"
+	"encoding/json"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -21,10 +26,11 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
-// createEndpoint creates a Go kit client endpoint
-func createEndpoint(
+// CreateHTTPEndpoint creates a Go kit client endpoint
+func CreateHTTPEndpoint(
 	instancer sd.Instancer, middleware endpoint.Middleware, operationName string,
-	route *mux.Route, decodeResponse kithttp.DecodeResponseFunc,
+	encodeRequest kithttp.EncodeRequestFunc,
+	decodeResponse kithttp.DecodeResponseFunc,
 ) endpoint.Endpoint {
 	options := []kithttp.ClientOption{
 		kitoc.HTTPClientTrace(), // OpenCensus HTTP Client transport tracing
@@ -42,15 +48,14 @@ func createEndpoint(
 
 		// set-up our Go kit client endpoint
 		// method is not set yet as it will be decided by the provided route
-		// when encoding the request using our generic request encoder.
+		// when encoding the request using our request encoder.
 		clientEndpoint := kithttp.NewClient(
-			"", baseURL, encodeGenericRequest(route), decodeResponse, options...,
+			"", baseURL, encodeRequest, decodeResponse, options...,
 		).Endpoint()
 
 		// configure per instance circuit breaker middleware
 		cb := circuitbreaker.Gobreaker(
 			gobreaker.NewCircuitBreaker(gobreaker.Settings{
-				Name:        "CLI/http",
 				MaxRequests: 5,
 				Interval:    10 * time.Second,
 				Timeout:     10 * time.Second,
@@ -89,4 +94,28 @@ func createEndpoint(
 
 	// return our endpoint
 	return endpoint
+}
+
+// EncodeGenericRequest is a generic request encoder which can be used if we
+// don't have to deal with URL parameters.
+func EncodeGenericRequest(route *mux.Route) kithttp.EncodeRequestFunc {
+	return func(_ context.Context, r *http.Request, request interface{}) error {
+		var err error
+
+		if r.URL, err = route.Host(r.URL.Host).URL(); err != nil {
+			return err
+		}
+		if methods, err := route.GetMethods(); err == nil {
+			r.Method = methods[0]
+		}
+
+		if request != nil {
+			var buf bytes.Buffer
+			if err := json.NewEncoder(&buf).Encode(request); err != nil {
+				return err
+			}
+			r.Body = ioutil.NopCloser(&buf)
+		}
+		return nil
+	}
 }

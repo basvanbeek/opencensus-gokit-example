@@ -1,12 +1,10 @@
-package grpcclient
+package grpc
 
 import (
 	// stdlib
-
-	// external
-
 	"time"
 
+	// external
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -15,12 +13,14 @@ import (
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
-	// project
-
-	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/pb"
+	// external
+	"github.com/basvanbeek/opencensus-gokit-example/shared/factory"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/loggermw"
+
+	// project
+	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
+	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/pb"
 )
 
 // InitEndpoints returns an initialized set of Go kit gRPC endpoints
@@ -41,15 +41,15 @@ func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoint
 	middlewares := endpoint.Chain(lmw, rl)
 
 	return transport.Endpoints{
-		Generate: createEndpoint(
+		Unlock: factory.CreateGRPCEndpoint(
 			instancer,
 			hm,
 			middlewares,
-			"Generate",
-			pb.GenerateResponse{},
-			encodeGenerateRequest,
-			decodeGenerateResponse,
-			decodeGenerateError(),
+			"Unlock",
+			pb.UnlockResponse{},
+			encodeUnlockRequest,
+			decodeUnlockResponse,
+			decodeUnlockError(),
 		),
 	}
 }

@@ -17,7 +17,7 @@ import (
 // NewGRPCClient returns a new qr client using the gRPC transport.
 func NewGRPCClient(instancer sd.Instancer, logger log.Logger) qr.Service {
 	return &client{
-		endpoints: grpcclient.InitEndpoints(instancer, logger),
+		endpoints: grpc.InitEndpoints(instancer, logger),
 		logger:    logger,
 	}
 }
