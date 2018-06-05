@@ -6,7 +6,6 @@ import (
 	"database/sql"
 
 	// external
-
 	"github.com/go-kit/kit/log"
 	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"

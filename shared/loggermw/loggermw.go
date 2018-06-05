@@ -1,10 +1,12 @@
 package loggermw
 
 import (
+	// stdlib
 	"context"
 	"fmt"
 	"time"
 
+	// external
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 )

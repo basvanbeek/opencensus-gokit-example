@@ -5,7 +5,6 @@ import (
 	"context"
 
 	// external
-
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
 	"github.com/satori/go.uuid"

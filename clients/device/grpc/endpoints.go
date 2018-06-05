@@ -13,14 +13,12 @@ import (
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
-	// external
-	"github.com/basvanbeek/opencensus-gokit-example/shared/factory"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
-	"github.com/basvanbeek/opencensus-gokit-example/shared/loggermw"
-
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/pb"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/factory"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
+	"github.com/basvanbeek/opencensus-gokit-example/shared/loggermw"
 )
 
 // InitEndpoints returns an initialized set of Go kit gRPC endpoints
