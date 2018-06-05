@@ -19,7 +19,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/shared/loggermw"
 )
 
-// InitEndpoints returns an initialized HTTP
+// InitEndpoints returns an initialized set of Go kit HTTP endpoints.
 func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoints {
 	route := routes.Initialize(mux.NewRouter())
 
@@ -32,61 +32,61 @@ func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoint
 	// debug logging middleware
 	lmw := loggermw.LoggerMiddleware(level.Debug(logger))
 
-	// chain our middlewares
+	// chain our service wide middlewares
 	middlewares := endpoint.Chain(lmw, rl)
 
 	// create our client endpoints
 	return transport.Endpoints{
-		Login: CreateEndpoint(
+		Login: createEndpoint(
 			instancer,
 			middlewares,
 			"Login",
 			route.Login,
 			decodeLoginResponse,
 		),
-		EventCreate: CreateEndpoint(
+		EventCreate: createEndpoint(
 			instancer,
 			middlewares,
 			"EventCreate",
 			route.EventCreate,
 			decodeEventCreateResponse,
 		),
-		EventGet: CreateEndpoint(
+		EventGet: createEndpoint(
 			instancer,
 			middlewares,
 			"EventGet",
 			route.EventGet,
 			decodeEventGetResponse,
 		),
-		EventUpdate: CreateEndpoint(
+		EventUpdate: createEndpoint(
 			instancer,
 			middlewares,
 			"EventUpdate",
 			route.EventUpdate,
 			decodeEventUpdateResponse,
 		),
-		EventDelete: CreateEndpoint(
+		EventDelete: createEndpoint(
 			instancer,
 			middlewares,
 			"EventDelete",
 			route.EventDelete,
 			decodeEventDeleteResponse,
 		),
-		EventList: CreateEndpoint(
+		EventList: createEndpoint(
 			instancer,
 			middlewares,
 			"EventList",
 			route.EventList,
 			decodeEventListResponse,
 		),
-		UnlockDevice: CreateEndpoint(
+		UnlockDevice: createEndpoint(
 			instancer,
 			middlewares,
 			"UnlockDevice",
 			route.UnlockDevice,
 			decodeUnlockDeviceResponse,
 		),
-		GenerateQR: CreateEndpoint(
+		GenerateQR: createEndpoint(
 			instancer,
 			middlewares,
 			"GenerateQR",

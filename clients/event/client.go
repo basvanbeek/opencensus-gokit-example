@@ -8,8 +8,8 @@ import (
 	"github.com/go-kit/kit/sd"
 
 	// project
+	eventtwirp "github.com/basvanbeek/opencensus-gokit-example/clients/event/twirp"
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
-	eventtwirp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/event/twirp"
 )
 
 // NewTwirp returns a new event client using the Twirp transport.

@@ -22,11 +22,11 @@ import (
 	"google.golang.org/grpc"
 
 	// project
+	devgrpc "github.com/basvanbeek/opencensus-gokit-example/clients/device/grpc"
+	devhttp "github.com/basvanbeek/opencensus-gokit-example/clients/device/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http/routes"
-	devgrpc "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/device/grpc"
-	devhttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/device/http"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
 )
 

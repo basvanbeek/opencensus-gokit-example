@@ -15,7 +15,7 @@ import (
 	"go.opencensus.io/trace"
 
 	// project
-	feclient "github.com/basvanbeek/opencensus-gokit-example/services/cli/transport/clients/frontend"
+	feclient "github.com/basvanbeek/opencensus-gokit-example/clients/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )

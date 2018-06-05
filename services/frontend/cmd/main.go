@@ -20,14 +20,14 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 
 	// project
+	devclient "github.com/basvanbeek/opencensus-gokit-example/clients/device"
+	evtclient "github.com/basvanbeek/opencensus-gokit-example/clients/event"
+	qrclient "github.com/basvanbeek/opencensus-gokit-example/clients/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
-	devclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/device"
-	evtclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/event"
-	qrclient "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/clients/qr/grpc"
 	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
@@ -103,7 +103,7 @@ func main() {
 			level.Error(logger).Log("exit", err)
 		}
 		// initialize QR client
-		qrClient := qrclient.New(qrInstancer, logger)
+		qrClient := qrclient.NewGRPCClient(qrInstancer, logger)
 
 		// create our frontend service
 		svc = implementation.NewService(evtClient, devClient, qrClient, logger)

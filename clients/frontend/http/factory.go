@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	// stdlib
-
 	"io"
 	"net/url"
 	"time"
@@ -17,14 +16,13 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/sony/gobreaker"
-	"go.opencensus.io/trace"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
-// CreateEndpoint creates a Go kit client endpoint
-func CreateEndpoint(
+// createEndpoint creates a Go kit client endpoint
+func createEndpoint(
 	instancer sd.Instancer, middleware endpoint.Middleware, operationName string,
 	route *mux.Route, decodeResponse kithttp.DecodeResponseFunc,
 ) endpoint.Endpoint {
@@ -78,26 +76,16 @@ func CreateEndpoint(
 	balancer := lb.NewRandom(endpoints, time.Now().UnixNano())
 
 	var (
-		retryCount    = 3
-		retryDuration = 5 * time.Second
-	)
-
-	// retryTracer instruments our HTTP endpoint retry/load balancer logic
-	retryTracer := kitoc.TraceEndpoint(
-		"kit/retry "+operationName,
-		kitoc.WithEndpointAttributes(
-			trace.StringAttribute("kit.balancer.type", "random"),
-			trace.StringAttribute("kit.retry.timeout", retryDuration.String()),
-			trace.Int64Attribute("kit.retry.count", int64(retryCount)),
-		),
+		count   = 3
+		timeout = 5 * time.Second
 	)
 
 	// retry uses balancer for executing a method call with retry and
 	// timeout logic so client consumer does not have to think about it.
-	endpoint := lb.Retry(retryCount, retryDuration, balancer)
+	endpoint := lb.Retry(count, timeout, balancer)
 
-	// wrap our retries in a parent span
-	endpoint = retryTracer(endpoint)
+	// wrap our retries in an annotated parent span
+	endpoint = oc.RetryEndpoint(operationName, oc.Random, count, timeout)(endpoint)
 
 	// return our endpoint
 	return endpoint

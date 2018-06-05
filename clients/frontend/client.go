@@ -10,7 +10,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	// project
-	"github.com/basvanbeek/opencensus-gokit-example/services/cli/transport/clients/frontend/http"
+	"github.com/basvanbeek/opencensus-gokit-example/clients/frontend/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 )
