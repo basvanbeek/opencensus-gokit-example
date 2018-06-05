@@ -113,7 +113,11 @@ func main() {
 		}
 		ctx, span := trace.StartSpan(ctx, "Do EventList")
 		events, err := client.EventList(ctx, tenantID)
+
+		// highlight how terribly expensive a call to spew is...
+		span.Annotate(nil, "spew.dump:start")
 		fmt.Printf("\nCLIENT EVENT LIST:\nRES:%s\nERR: %+v\n\n", spew.Sdump(events), err)
+		span.Annotate(nil, "spew.dump:end")
 		if err != nil {
 			span.SetStatus(trace.Status{trace.StatusCodeUnknown, err.Error()})
 		} else {
