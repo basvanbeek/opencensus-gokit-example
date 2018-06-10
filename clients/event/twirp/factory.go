@@ -17,9 +17,6 @@ import (
 
 // NewClient returns a new event client using the Twirp transport.
 func NewClient(instancer kitsd.Instancer, c *http.Client, logger log.Logger) event.Service {
-	if c == nil {
-		c = &http.Client{}
-	}
 	return &client{
 		instancer: factory(instancer, c, logger),
 		logger:    logger,

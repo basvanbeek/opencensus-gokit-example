@@ -22,6 +22,9 @@ type CreateResponse struct {
 	Err error
 }
 
+// Failed implements Failer
+func (r CreateResponse) Failed() error { return r.Err }
+
 // GetRequest holds the request parameters for the Get method.
 type GetRequest struct {
 	TenantID uuid.UUID
@@ -34,6 +37,9 @@ type GetResponse struct {
 	Err   error
 }
 
+// Failed implements Failer
+func (r GetResponse) Failed() error { return r.Err }
+
 // UpdateRequest holds the request parameters for the Update method.
 type UpdateRequest struct {
 	TenantID uuid.UUID
@@ -44,6 +50,9 @@ type UpdateRequest struct {
 type UpdateResponse struct {
 	Err error
 }
+
+// Failed implements Failer
+func (r UpdateResponse) Failed() error { return r.Err }
 
 // DeleteRequest holds the request parameters for the Delete method.
 type DeleteRequest struct {
@@ -56,6 +65,9 @@ type DeleteResponse struct {
 	Err error
 }
 
+// Failed implements Failer
+func (r DeleteResponse) Failed() error { return r.Err }
+
 // ListRequest holds the request parameters for the List method.
 type ListRequest struct {
 	TenantID uuid.UUID
@@ -66,3 +78,6 @@ type ListResponse struct {
 	Events []*event.Event
 	Err    error
 }
+
+// Failed implements Failer
+func (r ListResponse) Failed() error { return r.Err }

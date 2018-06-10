@@ -6,7 +6,6 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	uuid "github.com/satori/go.uuid"
 	oldcontext "golang.org/x/net/context"
@@ -26,13 +25,15 @@ type grpcServer struct {
 }
 
 // NewGRPCServer returns a new gRPC service for the provided Go kit endpoints
-func NewGRPCServer(endpoints transport.Endpoints, logger log.Logger) pb.DeviceServer {
+func NewGRPCServer(
+	endpoints transport.Endpoints, options []grpctransport.ServerOption,
+	logger log.Logger,
+) pb.DeviceServer {
 	var (
 		errorLogger = grpctransport.ServerErrorLogger(logger)
-		ocTracing   = kitoc.GRPCServerTrace()
 	)
 
-	options := []grpctransport.ServerOption{errorLogger, ocTracing}
+	options = append(options, errorLogger)
 
 	return &grpcServer{
 		unlock: grpctransport.NewServer(

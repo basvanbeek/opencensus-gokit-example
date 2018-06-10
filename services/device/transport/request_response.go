@@ -18,3 +18,6 @@ type UnlockResponse struct {
 	DeviceCaption string
 	Err           error
 }
+
+// Failed implements Failer
+func (r UnlockResponse) Failed() error { return r.Err }

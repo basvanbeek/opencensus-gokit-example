@@ -19,4 +19,4 @@ type GenerateResponse struct {
 }
 
 // Failed implements Failer.
-func (r *GenerateResponse) Failed() error { return r.Err }
+func (r GenerateResponse) Failed() error { return r.Err }
