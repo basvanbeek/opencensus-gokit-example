@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	// external
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -87,7 +88,7 @@ func decodeLoginRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 func encodeLoginResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)
@@ -101,7 +102,7 @@ func decodeEventCreateRequest(_ context.Context, r *http.Request) (interface{}, 
 
 func encodeEventCreateResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)
@@ -114,7 +115,7 @@ func decodeEventGetRequest(_ context.Context, r *http.Request) (interface{}, err
 
 func encodeEventGetResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)
@@ -127,7 +128,7 @@ func decodeEventUpdateRequest(_ context.Context, r *http.Request) (interface{}, 
 
 func encodeEventUpdateResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)
@@ -140,7 +141,7 @@ func decodeEventDeleteRequest(_ context.Context, r *http.Request) (interface{}, 
 
 func encodeEventDeleteResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)
@@ -153,7 +154,7 @@ func decodeEventListRequest(_ context.Context, r *http.Request) (interface{}, er
 
 func encodeEventListResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)
@@ -167,7 +168,7 @@ func decodeUnlockDeviceRequest(_ context.Context, r *http.Request) (interface{},
 
 func encodeUnlockDeviceResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := response.(transport.Failer).Failed(); err != nil {
+	if err := response.(endpoint.Failer).Failed(); err != nil {
 		return err
 	}
 	return json.NewEncoder(w).Encode(response)

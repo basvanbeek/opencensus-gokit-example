@@ -2,21 +2,23 @@ package transport
 
 import (
 	// external
+	"github.com/go-kit/kit/endpoint"
 	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 )
 
-// Failer is an interface that should be implemented by response types.
-// Response encoders can check if responses are Failer, and if so if they've
-// failed, and if so encode them using a separate write path based on the error.
-//
-// This is particularly useful if one can abstract the response encoding for
-// at least one of the supported service transports (ex. JSON over HTTP).
-type Failer interface {
-	Failed() error
-}
+var (
+	_ endpoint.Failer = LoginResponse{}
+	_ endpoint.Failer = EventCreateResponse{}
+	_ endpoint.Failer = EventGetResponse{}
+	_ endpoint.Failer = EventUpdateResponse{}
+	_ endpoint.Failer = EventDeleteResponse{}
+	_ endpoint.Failer = EventListResponse{}
+	_ endpoint.Failer = UnlockDeviceResponse{}
+	_ endpoint.Failer = GenerateQRResponse{}
+)
 
 // LoginRequest holds the request parameters for the Login method.
 type LoginRequest struct {

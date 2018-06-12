@@ -2,13 +2,20 @@ package transport
 
 import (
 	// external
+	"github.com/go-kit/kit/endpoint"
 	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
 )
 
-// project
+var (
+	_ endpoint.Failer = CreateResponse{}
+	_ endpoint.Failer = GetResponse{}
+	_ endpoint.Failer = UpdateResponse{}
+	_ endpoint.Failer = DeleteResponse{}
+	_ endpoint.Failer = ListResponse{}
+)
 
 // CreateRequest holds the request parameters for the Create method.
 type CreateRequest struct {

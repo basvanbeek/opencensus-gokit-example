@@ -1,8 +1,15 @@
 package transport
 
 import (
+	// external
+	"github.com/go-kit/kit/endpoint"
+
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
+)
+
+var (
+	_ endpoint.Failer = GenerateResponse{}
 )
 
 // GenerateRequest holds the request parameters for the Generate method.

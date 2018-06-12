@@ -2,7 +2,12 @@ package transport
 
 import (
 	// external
+	"github.com/go-kit/kit/endpoint"
 	"github.com/satori/go.uuid"
+)
+
+var (
+	_ endpoint.Failer = UnlockResponse{}
 )
 
 // UnlockRequest holds the request parameters for the Unlock method.
