@@ -10,6 +10,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/etcd"
 	uuid "github.com/satori/go.uuid"
 	"go.opencensus.io/trace"
@@ -62,8 +63,8 @@ func main() {
 
 	var client frontend.Service
 	{
-		// create an instancer for the frontend client
-		instancer, err := etcd.NewInstancer(sdc, "/services/"+frontend.ServiceName+"/http", logger)
+		var instancer sd.Instancer
+		instancer, err = etcd.NewInstancer(sdc, "/services/"+frontend.ServiceName+"/http", logger)
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 		}
@@ -76,12 +77,15 @@ func main() {
 		ctx, span := trace.StartSpan(ctx, "Do Login")
 		details, err := client.Login(ctx, "john", "doe")
 		if err != nil {
-			span.SetStatus(trace.Status{trace.StatusCodeUnknown, err.Error()})
+			span.SetStatus(trace.Status{
+				Code:    trace.StatusCodeUnknown,
+				Message: err.Error(),
+			})
 			span.End()
 			level.Error(logger).Log("msg", "login failed", "exit", err)
 			os.Exit(-1)
 		}
-		span.SetStatus(trace.Status{trace.StatusCodeOK, ""})
+		span.SetStatus(trace.Status{Code: trace.StatusCodeOK})
 		span.End()
 		level.Debug(logger).Log("msg", "login succeeded", "details", fmt.Sprintf("%+v", details))
 		tenantID = details.TenantID
@@ -97,10 +101,13 @@ func main() {
 			Name: "Marine Corps Marathon",
 		})
 		if err != nil {
-			span.SetStatus(trace.Status{trace.StatusCodeUnknown, err.Error()})
+			span.SetStatus(trace.Status{
+				Code:    trace.StatusCodeUnknown,
+				Message: err.Error(),
+			})
 			level.Error(logger).Log("msg", "event create failed", "exit", err)
 		} else {
-			span.SetStatus(trace.Status{trace.StatusCodeOK, ""})
+			span.SetStatus(trace.Status{Code: trace.StatusCodeOK})
 			level.Debug(logger).Log("msg", "event create succeeded", "id", id.String())
 		}
 		span.End()
@@ -119,9 +126,12 @@ func main() {
 		fmt.Printf("\nCLIENT EVENT LIST:\nRES:%s\nERR: %+v\n\n", spew.Sdump(events), err)
 		span.Annotate(nil, "spew.dump:end")
 		if err != nil {
-			span.SetStatus(trace.Status{trace.StatusCodeUnknown, err.Error()})
+			span.SetStatus(trace.Status{
+				Code:    trace.StatusCodeUnknown,
+				Message: err.Error(),
+			})
 		} else {
-			span.SetStatus(trace.Status{trace.StatusCodeOK, ""})
+			span.SetStatus(trace.Status{Code: trace.StatusCodeOK})
 		}
 		span.End()
 	}
