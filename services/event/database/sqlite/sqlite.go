@@ -52,7 +52,8 @@ func (s *sqlite) Create(
 		}
 	}
 
-	if _, err = s.db.Exec(
+	if _, err = s.db.ExecContext(
+		ctx,
 		`INSERT INTO event (id, tenant_id, name) VALUES (?, ?, ?)`,
 		event.ID.Bytes(), event.TenantID.Bytes(), event.Name,
 	); err != nil {
@@ -76,7 +77,8 @@ func (s *sqlite) Create(
 func (s *sqlite) Get(ctx context.Context, id uuid.UUID) (*database.Event, error) {
 	event := database.Event{ID: id}
 
-	if err := s.db.QueryRow(
+	if err := s.db.QueryRowContext(
+		ctx,
 		`SELECT tenant_id, name FROM event WHERE id = ?`, id.Bytes(),
 	).Scan(&event.TenantID, &event.Name); err != nil {
 		if err == sql.ErrNoRows {
@@ -96,7 +98,8 @@ func (s *sqlite) Update(ctx context.Context, event database.Event) (err error) {
 		cnt int64
 	)
 
-	res, err = s.db.Exec(
+	res, err = s.db.ExecContext(
+		ctx,
 		`UPDATE event SET name = ? WHERE tenant_id = ? AND id = ?`,
 		event.Name, event.TenantID.Bytes(), event.ID.Bytes(),
 	)
@@ -128,7 +131,8 @@ func (s *sqlite) Update(ctx context.Context, event database.Event) (err error) {
 func (s *sqlite) Delete(
 	ctx context.Context, tenantID uuid.UUID, id uuid.UUID,
 ) (err error) {
-	if _, err = s.db.Exec(
+	if _, err = s.db.ExecContext(
+		ctx,
 		`DELETE FROM event WHERE tenant_id = ? AND id = ?`,
 		tenantID.Bytes(), id.Bytes(),
 	); err != nil {
@@ -146,12 +150,14 @@ func (s *sqlite) List(
 
 	if uuid.Equal(tenantID, uuid.Nil) {
 		// listing all events
-		rows, err = s.db.Query(
+		rows, err = s.db.QueryContext(
+			ctx,
 			`SELECT id, tenant_id, name FROM event ORDER BY tenant_id, name`,
 		)
 	} else {
 		// listing owned events
-		rows, err = s.db.Query(
+		rows, err = s.db.QueryContext(
+			ctx,
 			`SELECT id, tenant_id, name FROM event WHERE tenant_id = ? ORDER BY name`,
 			tenantID.Bytes(),
 		)

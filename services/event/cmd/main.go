@@ -12,11 +12,13 @@ import (
 	"time"
 
 	// external
+	"github.com/basvanbeek/ocsql"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
 	uuid "github.com/satori/go.uuid"
 	"go.opencensus.io/plugin/ochttp"
@@ -78,7 +80,13 @@ func main() {
 	// Create our DB Connection Driver
 	var db *sqlx.DB
 	{
-		db, err = sqlx.Open("sqlite3", "event.db?_journal_mode=WAL")
+		var driverName string
+		driverName, err = ocsql.Register("sqlite3", ocsql.WithOptions(ocsql.TraceAll))
+		if err != nil {
+			level.Error(logger).Log("exit", err)
+			os.Exit(-1)
+		}
+		db, err = sqlx.Open(driverName, "event.db?_journal_mode=WAL")
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
