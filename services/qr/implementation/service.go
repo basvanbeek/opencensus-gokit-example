@@ -7,7 +7,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/skip2/go-qrcode"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"

@@ -6,7 +6,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
@@ -18,8 +18,8 @@ type server struct {
 	logger log.Logger
 }
 
-// NewTwirpServer returns a new Service backed by Twirp transport.
-func NewTwirpServer(svc event.Service, logger log.Logger) pb.Event {
+// NewService returns a new Service backed by Twirp transport.
+func NewService(svc event.Service, logger log.Logger) pb.Event {
 	return &server{
 		svc:    svc,
 		logger: logger,

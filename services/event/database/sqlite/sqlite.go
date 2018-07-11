@@ -9,7 +9,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
-	sqlite3 "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 	"github.com/openxact/versioning"
 	"github.com/satori/go.uuid"
 
@@ -169,6 +169,7 @@ func (s *sqlite) List(
 		level.Error(s.logger).Log("err", err)
 		return nil, database.ErrRepository
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var event database.Event

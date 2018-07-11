@@ -16,9 +16,9 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
-	httptransport "github.com/go-kit/kit/transport/http"
+	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/oklog/run"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"go.opencensus.io/plugin/ochttp"
 
 	// project
@@ -30,7 +30,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
-	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
+	httptransport "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
@@ -147,8 +147,8 @@ func main() {
 			service       = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar     = etcd.NewRegistrar(sdc, service, logger)
 			ocTracing     = kitoc.HTTPServerTrace()
-			serverOptions = []httptransport.ServerOption{ocTracing}
-			feService     = svchttp.NewHTTPHandler(endpoints, serverOptions, logger)
+			serverOptions = []kithttp.ServerOption{ocTracing}
+			feService     = httptransport.NewService(endpoints, serverOptions, logger)
 		)
 
 		g.Add(func() error {

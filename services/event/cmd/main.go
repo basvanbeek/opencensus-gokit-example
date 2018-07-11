@@ -20,7 +20,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"go.opencensus.io/plugin/ochttp"
 
 	// project
@@ -28,7 +28,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/event/database/sqlite"
 	"github.com/basvanbeek/opencensus-gokit-example/services/event/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/event/transport/pb"
-	svcevent "github.com/basvanbeek/opencensus-gokit-example/services/event/transport/twirp"
+	transporttwirp "github.com/basvanbeek/opencensus-gokit-example/services/event/transport/twirp"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
@@ -81,7 +81,7 @@ func main() {
 	var db *sqlx.DB
 	{
 		var driverName string
-		driverName, err = ocsql.Register("sqlite3", ocsql.WithOptions(ocsql.TraceAll))
+		driverName, err = ocsql.Register("sqlite3", ocsql.WithOptions(ocsql.AllTraceOptions))
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
@@ -117,7 +117,7 @@ func main() {
 		// set-up our twirp transport
 		var (
 			bindIP, _    = network.HostIP()
-			eventService = svcevent.NewTwirpServer(svc, logger)
+			eventService = transporttwirp.NewService(svc, logger)
 			listener, _  = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance  = "/services/" + event.ServiceName + "/twirp/" + instance.String()
 			addr         = "http://" + listener.Addr().String()

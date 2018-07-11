@@ -42,7 +42,7 @@ func InitEndpoints(instancer sd.Instancer, logger log.Logger) transport.Endpoint
 			instancer,
 			middlewares,
 			"Unlock",
-			factory.EncodeGenericRequest(route.Unlock),
+			encodeUnlockRequest(route.Unlock),
 			decodeUnlockResponse,
 		),
 	}

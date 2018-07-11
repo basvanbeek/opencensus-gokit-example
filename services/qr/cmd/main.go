@@ -17,14 +17,14 @@ import (
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/oklog/run"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport"
-	svcgrpc "github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/grpc"
+	grpctransport "github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/grpc"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/pb"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
@@ -104,7 +104,7 @@ func main() {
 			bindIP, _     = network.HostIP()
 			ocTracing     = kitoc.GRPCServerTrace()
 			serverOptions = []kitgrpc.ServerOption{ocTracing}
-			qrService     = svcgrpc.NewGRPCServer(endpoints, serverOptions, logger)
+			qrService     = grpctransport.NewGRPCServer(endpoints, serverOptions, logger)
 			listener, _   = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance   = fmt.Sprintf("/services/%s/grpc/%s/", qr.ServiceName, instance)
 			addr          = listener.Addr().String()

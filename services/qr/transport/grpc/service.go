@@ -6,7 +6,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
+	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	oldcontext "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,23 +19,23 @@ import (
 
 // grpc transport service for QR service.
 type grpcServer struct {
-	generate grpctransport.Handler
+	generate kitgrpc.Handler
 	logger   log.Logger
 }
 
 // NewGRPCServer returns a new gRPC service for the provided Go kit endpoints
 func NewGRPCServer(
-	endpoints transport.Endpoints, options []grpctransport.ServerOption,
+	endpoints transport.Endpoints, options []kitgrpc.ServerOption,
 	logger log.Logger,
 ) pb.QRServer {
 	var (
-		errorLogger = grpctransport.ServerErrorLogger(logger)
+		errorLogger = kitgrpc.ServerErrorLogger(logger)
 	)
 
 	options = append(options, errorLogger)
 
 	return &grpcServer{
-		generate: grpctransport.NewServer(
+		generate: kitgrpc.NewServer(
 			endpoints.Generate, decodeGenerateRequest, encodeGenerateResponse, options...,
 		),
 		logger: logger,

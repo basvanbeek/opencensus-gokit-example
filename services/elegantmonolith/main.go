@@ -16,11 +16,11 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
-	httptransport "github.com/go-kit/kit/transport/http"
+	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
@@ -32,7 +32,7 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	feimplementation "github.com/basvanbeek/opencensus-gokit-example/services/frontend/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
-	fesvchttp "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
+	httptransport "github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	qrimplementation "github.com/basvanbeek/opencensus-gokit-example/services/qr/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
@@ -186,8 +186,8 @@ func main() {
 			service       = etcd.Service{Key: svcInstance, Value: addr, TTL: ttl}
 			registrar     = etcd.NewRegistrar(sdc, service, logger)
 			ocTracing     = kitoc.HTTPServerTrace()
-			serverOptions = []httptransport.ServerOption{ocTracing}
-			feService     = fesvchttp.NewHTTPHandler(endpoints, serverOptions, logger)
+			serverOptions = []kithttp.ServerOption{ocTracing}
+			feService     = httptransport.NewService(endpoints, serverOptions, logger)
 		)
 
 		g.Add(func() error {

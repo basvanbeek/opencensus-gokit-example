@@ -12,26 +12,26 @@ import (
 	"time"
 
 	// external
+	"github.com/basvanbeek/ocsql"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
-	httptransport "github.com/go-kit/kit/transport/http"
+	kitgrpc "github.com/go-kit/kit/transport/grpc"
+	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 
 	// project
-	"github.com/basvanbeek/ocsql"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/database/sqlite"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/implementation"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
-	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc"
-	svchttp "github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http"
+	grpctransport "github.com/basvanbeek/opencensus-gokit-example/services/device/transport/grpc"
+	httptransport "github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/pb"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/network"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
@@ -97,7 +97,7 @@ func main() {
 	{
 		// create our ocsql instrumented sqlite3 driver
 		var driverName string
-		driverName, err = ocsql.Register("sqlite3", ocsql.WithOptions(ocsql.TraceAll))
+		driverName, err = ocsql.Register("sqlite3", ocsql.WithOptions(ocsql.AllTraceOptions))
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)
@@ -146,8 +146,8 @@ func main() {
 		// set-up our grpc transport
 		var (
 			ocTracing     = kitoc.GRPCServerTrace()
-			serverOptions = []grpctransport.ServerOption{ocTracing}
-			service       = svcgrpc.NewGRPCServer(endpoints, serverOptions, logger)
+			serverOptions = []kitgrpc.ServerOption{ocTracing}
+			service       = grpctransport.NewService(endpoints, serverOptions, logger)
 			listener, _   = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance   = fmt.Sprintf("/services/%s/grpc/%s/", device.ServiceName, instance)
 			addr          = listener.Addr().String()
@@ -170,8 +170,8 @@ func main() {
 		// set-up our http transport
 		var (
 			ocTracing     = kitoc.HTTPServerTrace()
-			serverOptions = []httptransport.ServerOption{ocTracing}
-			service       = svchttp.NewHTTPHandler(endpoints, serverOptions, logger)
+			serverOptions = []kithttp.ServerOption{ocTracing}
+			service       = httptransport.NewService(endpoints, serverOptions, logger)
 			listener, _   = net.Listen("tcp", bindIP+":0") // dynamic port assignment
 			svcInstance   = fmt.Sprintf("/services/%s/http/%s/", device.ServiceName, instance)
 			addr          = "http://" + listener.Addr().String()
@@ -181,6 +181,7 @@ func main() {
 		)
 
 		g.Add(func() error {
+			registrar.Register()
 			return http.Serve(listener, service)
 		}, func(error) {
 			registrar.Deregister()

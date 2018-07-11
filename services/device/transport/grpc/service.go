@@ -1,4 +1,4 @@
-package svcgrpc
+package grpc
 
 import (
 	// stdlib
@@ -6,8 +6,8 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
-	uuid "github.com/satori/go.uuid"
+	kitgrpc "github.com/go-kit/kit/transport/grpc"
+	"github.com/satori/go.uuid"
 	oldcontext "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,23 +20,23 @@ import (
 
 // grpc transport service for QR service.
 type grpcServer struct {
-	unlock grpctransport.Handler
+	unlock kitgrpc.Handler
 	logger log.Logger
 }
 
-// NewGRPCServer returns a new gRPC service for the provided Go kit endpoints
-func NewGRPCServer(
-	endpoints transport.Endpoints, options []grpctransport.ServerOption,
+// NewService returns a new gRPC service for the provided Go kit endpoints
+func NewService(
+	endpoints transport.Endpoints, options []kitgrpc.ServerOption,
 	logger log.Logger,
 ) pb.DeviceServer {
 	var (
-		errorLogger = grpctransport.ServerErrorLogger(logger)
+		errorLogger = kitgrpc.ServerErrorLogger(logger)
 	)
 
 	options = append(options, errorLogger)
 
 	return &grpcServer{
-		unlock: grpctransport.NewServer(
+		unlock: kitgrpc.NewServer(
 			endpoints.Unlock, decodeUnlockRequest, encodeUnlockResponse, options...,
 		),
 		logger: logger,

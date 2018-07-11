@@ -12,7 +12,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/etcd"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"go.opencensus.io/trace"
 
 	// project

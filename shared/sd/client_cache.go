@@ -72,7 +72,6 @@ func (c *clientInstancerCache) Update(event sd.Event) {
 	// set new deadline to invalidate clientInstances unless non-error Event is
 	// received
 	c.invalidateDeadline = c.timeNow().Add(c.options.invalidateTimeout)
-	return
 }
 
 func (c *clientInstancerCache) updateCache(instances []string) {

@@ -11,15 +11,15 @@ import (
 	"github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
 )
 
-// NewHTTPHandler wires our Go kit endpoints to the HTTP transport.
-func NewHTTPHandler(
+// NewService wires our Go kit endpoints to the HTTP transport.
+func NewService(
 	svcEndpoints transport.Endpoints, options []httptransport.ServerOption,
 	logger log.Logger,
 ) http.Handler {

@@ -6,7 +6,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
