@@ -7,6 +7,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/satori/go.uuid"
+	"github.com/twitchtv/twirp"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
@@ -35,27 +36,34 @@ func (s *server) Create(ctx context.Context, r *pb.CreateRequest) (*pb.CreateRes
 			Name: r.Event.Name,
 		},
 	)
-	if err != nil {
-		return nil, err
+
+	switch err {
+	case nil:
+		return &pb.CreateResponse{Id: id.Bytes()}, nil
+	case event.ErrEventExists:
+		return nil, twirp.NewError(twirp.AlreadyExists, err.Error())
+	default:
+		return nil, twirp.InternalErrorWith(err)
 	}
-	return &pb.CreateResponse{Id: id.Bytes()}, nil
 }
 
 func (s *server) Get(ctx context.Context, r *pb.GetRequest) (*pb.GetResponse, error) {
-	event, err := s.svc.Get(
+	evt, err := s.svc.Get(
 		ctx,
 		uuid.FromBytesOrNil(r.TenantId),
 		uuid.FromBytesOrNil(r.Id),
 	)
-	if err != nil {
-		return nil, err
+
+	switch err {
+	case nil:
+		return &pb.GetResponse{
+			Event: &pb.EventObj{Id: evt.ID.Bytes(), Name: evt.Name},
+		}, nil
+	case event.ErrNotFound:
+		return nil, twirp.NotFoundError(err.Error())
+	default:
+		return nil, twirp.InternalErrorWith(err)
 	}
-	return &pb.GetResponse{
-		Event: &pb.EventObj{
-			Id:   event.ID.Bytes(),
-			Name: event.Name,
-		},
-	}, nil
 }
 
 func (s *server) Update(ctx context.Context, r *pb.UpdateRequest) (*pb.UpdateResponse, error) {
@@ -67,7 +75,17 @@ func (s *server) Update(ctx context.Context, r *pb.UpdateRequest) (*pb.UpdateRes
 			Name: r.Event.Name,
 		},
 	)
-	return nil, err
+
+	switch err {
+	case nil:
+		return &pb.UpdateResponse{}, nil
+	case event.ErrNotFound:
+		return nil, twirp.NotFoundError(err.Error())
+	case event.ErrEventExists:
+		return nil, twirp.NewError(twirp.AlreadyExists, err.Error())
+	default:
+		return nil, twirp.InternalErrorWith(err)
+	}
 }
 
 func (s *server) Delete(ctx context.Context, r *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -76,13 +94,21 @@ func (s *server) Delete(ctx context.Context, r *pb.DeleteRequest) (*pb.DeleteRes
 		uuid.FromBytesOrNil(r.TenantId),
 		uuid.FromBytesOrNil(r.Id),
 	)
-	return nil, err
+
+	switch err {
+	case nil:
+		return &pb.DeleteResponse{}, nil
+	case event.ErrNotFound:
+		return nil, twirp.NotFoundError(err.Error())
+	default:
+		return nil, twirp.InternalErrorWith(err)
+	}
 }
 
 func (s *server) List(ctx context.Context, r *pb.ListRequest) (*pb.ListResponse, error) {
 	events, err := s.svc.List(ctx, uuid.FromBytesOrNil(r.TenantId))
 	if err != nil {
-		return nil, err
+		return nil, twirp.InternalErrorWith(err)
 	}
 	pbEvents := make([]*pb.EventObj, 0, len(events))
 	for _, event := range events {

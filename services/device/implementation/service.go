@@ -44,11 +44,14 @@ func (s *service) Unlock(
 		}
 		details = &database.Session{}
 	}
-	err = bcrypt.CompareHashAndPassword(details.UnlockHash, []byte(unlockCode))
-	if err != nil {
+
+	if err = bcrypt.CompareHashAndPassword(
+		details.UnlockHash, []byte(unlockCode),
+	); err != nil {
 		level.Error(logger).Log("err", err)
-		return nil, err
+		return nil, device.ErrUnlockNotFound
 	}
+
 	return &device.Session{
 		EventCaption:  details.EventCaption,
 		DeviceCaption: details.DeviceCaption,
