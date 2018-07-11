@@ -28,10 +28,7 @@ func NewGRPCServer(
 	endpoints transport.Endpoints, options []kitgrpc.ServerOption,
 	logger log.Logger,
 ) pb.QRServer {
-	var (
-		errorLogger = kitgrpc.ServerErrorLogger(logger)
-	)
-
+	errorLogger := kitgrpc.ServerErrorLogger(logger)
 	options = append(options, errorLogger)
 
 	return &grpcServer{

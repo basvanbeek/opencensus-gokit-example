@@ -29,9 +29,8 @@ func NewService(logger log.Logger) qr.Service {
 func (s *service) Generate(
 	ctx context.Context, url string, recLevel qr.RecoveryLevel, size int,
 ) ([]byte, error) {
-	var (
-		logger = log.With(s.logger, "method", "Generate")
-	)
+	logger := log.With(s.logger, "method", "Generate")
+
 	// test for valid input
 	if len(url) == 0 {
 		return nil, qr.ErrNoContent
@@ -42,6 +41,7 @@ func (s *service) Generate(
 	if size > 4096 {
 		return nil, qr.ErrInvalidSize
 	}
+
 	// do the actual work
 	b, err := qrcode.Encode(url, qrcode.RecoveryLevel(recLevel), size)
 	if err != nil {

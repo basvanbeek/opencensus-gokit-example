@@ -33,6 +33,8 @@ func NewService(rep database.Repository, logger log.Logger) event.Service {
 func (s *service) Create(
 	ctx context.Context, tenantID uuid.UUID, e event.Event,
 ) (*uuid.UUID, error) {
+	logger := log.With(s.logger, "method", "Create")
+
 	dbEvent := database.Event{
 		TenantID: tenantID,
 		Name:     e.Name,
@@ -42,13 +44,13 @@ func (s *service) Create(
 	case nil:
 		return id, nil
 	case database.ErrRepository:
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return nil, event.ErrService
 	case database.ErrNameExists:
-		level.Debug(s.logger).Log("err", err)
+		level.Debug(logger).Log("err", err)
 		return nil, event.ErrEventExists
 	default:
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return nil, event.ErrService
 	}
 }
@@ -56,6 +58,8 @@ func (s *service) Create(
 func (s *service) Get(
 	ctx context.Context, tenantID, id uuid.UUID,
 ) (*event.Event, error) {
+	logger := log.With(s.logger, "method", "Get")
+
 	dbEvent, err := s.repository.Get(ctx, id)
 	switch err {
 	case nil:
@@ -65,18 +69,20 @@ func (s *service) Get(
 		}
 		return &event.Event{ID: dbEvent.ID, Name: dbEvent.Name}, nil
 	case database.ErrRepository:
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return nil, event.ErrService
 	case database.ErrNotFound:
-		level.Debug(s.logger).Log("err", err)
+		level.Debug(logger).Log("err", err)
 		return nil, event.ErrNotFound
 	default:
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return nil, event.ErrService
 	}
 }
 
 func (s *service) Update(ctx context.Context, tenantID uuid.UUID, e event.Event) error {
+	logger := log.With(s.logger, "method", "Update")
+
 	err := s.repository.Update(
 		ctx,
 		database.Event{
@@ -90,32 +96,36 @@ func (s *service) Update(ctx context.Context, tenantID uuid.UUID, e event.Event)
 	case nil:
 		return nil
 	case database.ErrRepository:
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return event.ErrService
 	case database.ErrNameExists:
-		level.Debug(s.logger).Log("err", err)
+		level.Debug(logger).Log("err", err)
 		return event.ErrEventExists
 	case database.ErrNotFound:
-		level.Debug(s.logger).Log("err", err)
+		level.Debug(logger).Log("err", err)
 		return event.ErrNotFound
 	default:
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return event.ErrService
 	}
 }
 
 func (s *service) Delete(ctx context.Context, tenantID, id uuid.UUID) error {
+	logger := log.With(s.logger, "method", "Delete")
+
 	if err := s.repository.Delete(ctx, tenantID, id); err != nil {
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return event.ErrService
 	}
 	return nil
 }
 
 func (s *service) List(ctx context.Context, tenantID uuid.UUID) ([]*event.Event, error) {
+	logger := log.With(s.logger, "method", "List")
+
 	dbEvents, err := s.repository.List(ctx, tenantID)
 	if err != nil {
-		level.Error(s.logger).Log("err", err)
+		level.Error(logger).Log("err", err)
 		return nil, event.ErrService
 	}
 	events := make([]*event.Event, 0, len(dbEvents))

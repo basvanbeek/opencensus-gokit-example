@@ -97,9 +97,7 @@ func (s *service) EventList(ctx context.Context, tenantID uuid.UUID) ([]*fronten
 
 // Unlockdevice returns a new session for allowing device to check-in participants.
 func (s *service) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) (*frontend.Session, error) {
-	var (
-		logger = log.With(s.logger, "method", "UnlockDevice")
-	)
+	logger := log.With(s.logger, "method", "UnlockDevice")
 
 	if eventID == uuid.Nil {
 		level.Warn(logger).Log("err", frontend.ErrRequireEventID)
@@ -111,7 +109,6 @@ func (s *service) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID,
 	}
 
 	unlockCode = strings.Trim(unlockCode, "\r\n\t ")
-
 	if unlockCode == "" {
 		level.Warn(logger).Log("err", frontend.ErrRequireUnlockCode)
 		return nil, frontend.ErrRequireUnlockCode
@@ -133,9 +130,7 @@ func (s *service) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID,
 
 // Generate returns a new QR code device unlock image based on the provided details.
 func (s *service) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) ([]byte, error) {
-	var (
-		logger = log.With(s.logger, "method", "GenerateQR")
-	)
+	logger := log.With(s.logger, "method", "GenerateQR")
 
 	if eventID == uuid.Nil {
 		level.Warn(logger).Log("err", frontend.ErrRequireEventID)
@@ -147,7 +142,6 @@ func (s *service) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, u
 	}
 
 	unlockCode = strings.Trim(unlockCode, "\r\n\t ")
-
 	if unlockCode == "" {
 		level.Warn(logger).Log("err", frontend.ErrRequireUnlockCode)
 		return nil, frontend.ErrRequireUnlockCode

@@ -7,6 +7,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 
@@ -33,15 +34,19 @@ func NewService(rep database.Repository, logger log.Logger) device.Service {
 func (s *service) Unlock(
 	ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string,
 ) (*device.Session, error) {
+	logger := log.With(s.logger, "method", "Unlock")
+
 	details, err := s.repository.GetDevice(ctx, eventID, deviceID)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			return nil, err
+			level.Error(logger).Log("err", err)
+			return nil, device.ErrRepository
 		}
 		details = &database.Session{}
 	}
 	err = bcrypt.CompareHashAndPassword(details.UnlockHash, []byte(unlockCode))
 	if err != nil {
+		level.Error(logger).Log("err", err)
 		return nil, err
 	}
 	return &device.Session{

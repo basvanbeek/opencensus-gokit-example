@@ -6,10 +6,8 @@ import (
 	"errors"
 )
 
-// Service name
-const (
-	ServiceName = "qr"
-)
+// ServiceName of this service.
+const ServiceName = "qr"
 
 // Service describes our QR service.
 type Service interface {

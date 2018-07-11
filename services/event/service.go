@@ -9,10 +9,8 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// Service name
-const (
-	ServiceName = "event"
-)
+// ServiceName of this service.
+const ServiceName = "event"
 
 // Service describes our Event service.
 type Service interface {

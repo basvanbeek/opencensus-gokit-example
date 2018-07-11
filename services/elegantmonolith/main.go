@@ -39,9 +39,8 @@ import (
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
 
-const (
-	serviceName = "ElegantMonolith"
-)
+// ServiceName of this service.
+const serviceName = "ElegantMonolith"
 
 func main() {
 	var (
