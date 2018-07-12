@@ -45,9 +45,16 @@ func (c client) Unlock(ctx context.Context, eventID, deviceID uuid.UUID, code st
 		Code:     code,
 	})
 	if err != nil {
+		// transport logic / unknown error
 		return nil, err
 	}
+
 	response := res.(transport.UnlockResponse)
+	if response.Err != nil {
+		// business logic error
+		return nil, err
+	}
+
 	return &device.Session{
 		EventCaption:  response.EventCaption,
 		DeviceCaption: response.DeviceCaption,

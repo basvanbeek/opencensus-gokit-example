@@ -41,6 +41,10 @@ func decodeUnlockError() endpoint.Middleware {
 			case codes.OK:
 				// no error encountered... proceed with regular response payload
 				return response, nil
+			case codes.InvalidArgument, codes.Unauthenticated:
+				// business logic error which should not retry or trigger
+				// the circuitbreaker as service is behaving normally.
+				return transport.UnlockResponse{Err: errors.New(st.Message())}, nil
 			default:
 				// error which might invoke a retry or trigger a circuitbreaker
 				return nil, errors.New(st.Message())

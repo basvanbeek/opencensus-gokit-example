@@ -4,6 +4,8 @@ import (
 	// stdlib
 	"context"
 	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
 
 	// external
@@ -11,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 
 	// project
+
+	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
 )
 
@@ -38,6 +42,30 @@ func encodeUnlockRequest(route *mux.Route) kithttp.EncodeRequestFunc {
 
 func decodeUnlockResponse(_ context.Context, response *http.Response) (interface{}, error) {
 	var res transport.UnlockResponse
+	if response.StatusCode != http.StatusOK {
+		b, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+		errStr := string(b)
+		switch errStr {
+		case device.ErrorRequireEventID:
+			res.Err = device.ErrRequireEventID
+		case device.ErrorRequireDeviceID:
+			res.Err = device.ErrRequireDeviceID
+		case device.ErrorRequireUnlockCode:
+			res.Err = device.ErrRequireUnlockCode
+		case device.ErrorRepository:
+			res.Err = device.ErrRepository
+		case device.ErrorEventNotFound:
+			res.Err = device.ErrEventNotFound
+		case device.ErrorUnlockNotFound:
+			res.Err = device.ErrUnlockNotFound
+		default:
+			return nil, errors.New(errStr)
+		}
+		return res, nil
+	}
 	dec := json.NewDecoder(response.Body)
 	if err := dec.Decode(&res); err != nil {
 		return nil, err

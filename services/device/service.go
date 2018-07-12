@@ -17,14 +17,24 @@ type Service interface {
 	Unlock(ctx context.Context, eventID, deviceID uuid.UUID, code string) (*Session, error)
 }
 
-// Common Service Errors
+// Device Service Error descriptions
+const (
+	ErrorRequireEventID    = "missing required event id"
+	ErrorRequireDeviceID   = "missing required device id"
+	ErrorRequireUnlockCode = "missing required unlock code"
+	ErrorRepository        = "unable to query repository"
+	ErrorEventNotFound     = "event not found"
+	ErrorUnlockNotFound    = "device / unlock code combination not found"
+)
+
+// Device Service Errors
 var (
-	ErrRequireEventID    = errors.New("missing required event id")
-	ErrRequireDeviceID   = errors.New("missing required device id")
-	ErrRequireUnlockCode = errors.New("missing required unlock code")
-	ErrRepository        = errors.New("unable to query repository")
-	ErrEventNotFound     = errors.New("event not found")
-	ErrUnlockNotFound    = errors.New("device / unlock code combination not found")
+	ErrRequireEventID    = errors.New(ErrorRequireEventID)
+	ErrRequireDeviceID   = errors.New(ErrorRequireDeviceID)
+	ErrRequireUnlockCode = errors.New(ErrorRequireUnlockCode)
+	ErrRepository        = errors.New(ErrorRepository)
+	ErrEventNotFound     = errors.New(ErrorEventNotFound)
+	ErrUnlockNotFound    = errors.New(ErrorUnlockNotFound)
 )
 
 // Session holds session details
