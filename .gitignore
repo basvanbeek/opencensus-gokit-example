@@ -4,6 +4,9 @@
 *.so
 *.dylib
 
+# shell scripts
+*.sh
+
 # app databases
 *.db*
 
