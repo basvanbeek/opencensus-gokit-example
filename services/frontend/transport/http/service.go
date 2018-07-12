@@ -208,3 +208,12 @@ func encodeGenerateQRResponse(_ context.Context, w http.ResponseWriter, response
 	w.Write(res.QR)
 	return nil
 }
+
+func encodeErrorResponse(_ context.Context, err error, w http.ResponseWriter) {
+	var code int
+	switch err {
+	default:
+		code = http.StatusInternalServerError
+	}
+	http.Error(w, err.Error(), code)
+}

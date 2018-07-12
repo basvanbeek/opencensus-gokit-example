@@ -7,11 +7,13 @@ import (
 	"net/http"
 
 	// external
+
 	"github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 
 	// project
+	"github.com/basvanbeek/opencensus-gokit-example/services/device"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/transport/http/routes"
 )
@@ -23,12 +25,13 @@ func NewService(
 ) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
-		router      = mux.NewRouter()
-		route       = routes.Initialize(router)
-		errorLogger = kithttp.ServerErrorLogger(logger)
+		router       = mux.NewRouter()
+		route        = routes.Initialize(router)
+		errorLogger  = kithttp.ServerErrorLogger(logger)
+		errorEncoder = kithttp.ServerErrorEncoder(encodeErrorResponse)
 	)
 
-	options = append(options, errorLogger)
+	options = append(options, errorLogger, errorEncoder)
 
 	// wire our Go kit handlers to the http endpoints
 	route.Unlock.Handler(kithttp.NewServer(
@@ -52,4 +55,17 @@ func decodeUnlockRequest(_ context.Context, r *http.Request) (interface{}, error
 func encodeUnlockResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeErrorResponse(_ context.Context, err error, w http.ResponseWriter) {
+	var code int
+	switch err {
+	case device.ErrRequireEventID, device.ErrRequireDeviceID, device.ErrRequireUnlockCode:
+		code = http.StatusBadRequest
+	case device.ErrEventNotFound, device.ErrUnlockNotFound:
+		code = http.StatusUnauthorized
+	default:
+		code = http.StatusInternalServerError
+	}
+	http.Error(w, err.Error(), code)
 }
