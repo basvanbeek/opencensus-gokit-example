@@ -9,66 +9,68 @@ import (
 	// external
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
-	httptransport "github.com/go-kit/kit/transport/http"
+	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 
 	// project
+	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend/transport/http/routes"
 )
 
 // NewService wires our Go kit endpoints to the HTTP transport.
 func NewService(
-	svcEndpoints transport.Endpoints, options []httptransport.ServerOption,
+	svcEndpoints transport.Endpoints, options []kithttp.ServerOption,
 	logger log.Logger,
 ) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
-		router      = mux.NewRouter()
-		route       = routes.Initialize(router)
-		errorLogger = httptransport.ServerErrorLogger(logger)
+		router       = mux.NewRouter()
+		route        = routes.Initialize(router)
+		errorLogger  = kithttp.ServerErrorLogger(logger)
+		errorEncoder = kithttp.ServerErrorEncoder(encodeErrorResponse)
 	)
 
-	options = append(options, errorLogger)
+	options = append(options, errorLogger, errorEncoder)
 
 	// wire our Go kit handlers to the http endpoints
-	route.Login.Handler(httptransport.NewServer(
+	route.Login.Handler(kithttp.NewServer(
 		svcEndpoints.Login, decodeLoginRequest, encodeLoginResponse,
 		options...,
 	))
 
-	route.EventCreate.Handler(httptransport.NewServer(
+	route.EventCreate.Handler(kithttp.NewServer(
 		svcEndpoints.EventCreate, decodeEventCreateRequest, encodeEventCreateResponse,
 		options...,
 	))
 
-	route.EventGet.Handler(httptransport.NewServer(
+	route.EventGet.Handler(kithttp.NewServer(
 		svcEndpoints.EventGet, decodeEventGetRequest, encodeEventGetResponse,
 		options...,
 	))
 
-	route.EventUpdate.Handler(httptransport.NewServer(
+	route.EventUpdate.Handler(kithttp.NewServer(
 		svcEndpoints.EventUpdate, decodeEventUpdateRequest, encodeEventUpdateResponse,
 		options...,
 	))
 
-	route.EventDelete.Handler(httptransport.NewServer(
+	route.EventDelete.Handler(kithttp.NewServer(
 		svcEndpoints.EventDelete, decodeEventDeleteRequest, encodeEventDeleteResponse,
 		options...,
 	))
 
-	route.EventList.Handler(httptransport.NewServer(
+	route.EventList.Handler(kithttp.NewServer(
 		svcEndpoints.EventList, decodeEventListRequest, encodeEventListResponse,
 		options...,
 	))
 
-	route.UnlockDevice.Handler(httptransport.NewServer(
+	route.UnlockDevice.Handler(kithttp.NewServer(
 		svcEndpoints.UnlockDevice, decodeUnlockDeviceRequest, encodeUnlockDeviceResponse,
 		options...,
 	))
 
-	route.GenerateQR.Handler(httptransport.NewServer(
+	route.GenerateQR.Handler(kithttp.NewServer(
 		svcEndpoints.GenerateQR, decodeGenerateQRRequest, encodeGenerateQRResponse,
 		options...,
 	))
@@ -212,6 +214,13 @@ func encodeGenerateQRResponse(_ context.Context, w http.ResponseWriter, response
 func encodeErrorResponse(_ context.Context, err error, w http.ResponseWriter) {
 	var code int
 	switch err {
+	case frontend.ErrUserPassRequired, frontend.ErrRequireEventID,
+		frontend.ErrRequireDeviceID, frontend.ErrRequireUnlockCode:
+		code = http.StatusBadRequest
+	case frontend.ErrEventNotFound:
+		code = http.StatusNotFound
+	case frontend.ErrUserPassUnknown, frontend.ErrUnlockNotFound:
+		code = http.StatusUnauthorized
 	default:
 		code = http.StatusInternalServerError
 	}
