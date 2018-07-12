@@ -21,12 +21,20 @@ type Service interface {
 	List(ctx context.Context, tenantID uuid.UUID) ([]*Event, error)
 }
 
+// Event Service Error descriptions
+const (
+	ErrorService      = "internal service error"
+	ErrorUnauthorized = "unauthorized"
+	ErrorNotFound     = "event not found"
+	ErrorEventExists  = "event already exists"
+)
+
 // Event Service Errors
 var (
-	ErrService      = errors.New("internal service error")
-	ErrUnauthorized = errors.New("unauthorizated")
-	ErrNotFound     = errors.New("event not found")
-	ErrEventExists  = errors.New("event already exists")
+	ErrService      = errors.New(ErrorService)
+	ErrUnauthorized = errors.New(ErrorUnauthorized)
+	ErrNotFound     = errors.New(ErrorNotFound)
+	ErrEventExists  = errors.New(ErrorEventExists)
 )
 
 // Event data

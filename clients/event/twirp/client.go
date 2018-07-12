@@ -7,6 +7,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/satori/go.uuid"
+	"github.com/twitchtv/twirp"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event"
@@ -20,7 +21,7 @@ type client struct {
 }
 
 func (c client) Create(
-	ctx context.Context, tenantID uuid.UUID, event event.Event,
+	ctx context.Context, tenantID uuid.UUID, evt event.Event,
 ) (*uuid.UUID, error) {
 	ci := c.instancer()
 	if ci == nil {
@@ -30,11 +31,22 @@ func (c client) Create(
 	res, err := ci.Create(ctx, &pb.CreateRequest{
 		TenantId: tenantID.Bytes(),
 		Event: &pb.EventObj{
-			Id:   event.ID.Bytes(),
-			Name: event.Name,
+			Id:   evt.ID.Bytes(),
+			Name: evt.Name,
 		},
 	})
+
 	if err != nil {
+		if twErr, ok := err.(twirp.Error); ok {
+			switch twErr.Error() {
+			case event.ErrorService:
+				return nil, event.ErrService
+			case event.ErrorUnauthorized:
+				return nil, event.ErrUnauthorized
+			case event.ErrorEventExists:
+				return nil, event.ErrEventExists
+			}
+		}
 		return nil, err
 	}
 
@@ -57,9 +69,18 @@ func (c client) Get(
 		TenantId: tenantID.Bytes(),
 		Id:       id.Bytes(),
 	})
-	if err != nil {
-		return nil, err
+
+	if twErr, ok := err.(twirp.Error); ok {
+		switch twErr.Error() {
+		case event.ErrorService:
+			return nil, event.ErrService
+		case event.ErrorUnauthorized:
+			return nil, event.ErrUnauthorized
+		case event.ErrorNotFound:
+			return nil, event.ErrNotFound
+		}
 	}
+
 	return &event.Event{
 		ID:   uuid.FromBytesOrNil(res.Event.Id),
 		Name: res.Event.Name,
@@ -67,7 +88,7 @@ func (c client) Get(
 }
 
 func (c client) Update(
-	ctx context.Context, tenantID uuid.UUID, event event.Event,
+	ctx context.Context, tenantID uuid.UUID, evt event.Event,
 ) error {
 	ci := c.instancer()
 	if ci == nil {
@@ -77,10 +98,25 @@ func (c client) Update(
 	_, err := ci.Update(ctx, &pb.UpdateRequest{
 		TenantId: tenantID.Bytes(),
 		Event: &pb.EventObj{
-			Id:   event.ID.Bytes(),
-			Name: event.Name,
+			Id:   evt.ID.Bytes(),
+			Name: evt.Name,
 		},
 	})
+
+	if err != nil {
+		if twErr, ok := err.(twirp.Error); ok {
+			switch twErr.Error() {
+			case event.ErrorService:
+				return event.ErrService
+			case event.ErrorUnauthorized:
+				return event.ErrUnauthorized
+			case event.ErrorNotFound:
+				return event.ErrNotFound
+			case event.ErrorEventExists:
+				return event.ErrEventExists
+			}
+		}
+	}
 
 	return err
 }
@@ -98,6 +134,19 @@ func (c client) Delete(
 		Id:       id.Bytes(),
 	})
 
+	if err != nil {
+		if twErr, ok := err.(twirp.Error); ok {
+			switch twErr.Error() {
+			case event.ErrorService:
+				return event.ErrService
+			case event.ErrorUnauthorized:
+				return event.ErrUnauthorized
+			case event.ErrorNotFound:
+				return event.ErrNotFound
+			}
+		}
+	}
+
 	return err
 }
 
@@ -112,9 +161,18 @@ func (c client) List(
 	pbListResponse, err := ci.List(ctx, &pb.ListRequest{
 		TenantId: tenantID.Bytes(),
 	})
+
 	if err != nil {
-		return nil, err
+		if twErr, ok := err.(twirp.Error); ok {
+			switch twErr.Error() {
+			case event.ErrorService:
+				return nil, event.ErrService
+			case event.ErrorUnauthorized:
+				return nil, event.ErrUnauthorized
+			}
+		}
 	}
+
 	events := make([]*event.Event, 0, len(pbListResponse.Events))
 	for _, evt := range pbListResponse.Events {
 		events = append(events, &event.Event{
