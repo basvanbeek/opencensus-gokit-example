@@ -11,7 +11,7 @@ import (
 	"github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/frontend"

@@ -8,7 +8,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	// project

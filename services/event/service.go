@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/kevinburke/go.uuid"
 	// external
-	"github.com/satori/go.uuid"
 )
 
 // ServiceName of this service.

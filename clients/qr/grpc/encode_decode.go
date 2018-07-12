@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	// project
+	"github.com/basvanbeek/opencensus-gokit-example/services/qr"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport"
 	"github.com/basvanbeek/opencensus-gokit-example/services/qr/transport/pb"
 )
@@ -45,10 +46,26 @@ func decodeGenerateError() endpoint.Middleware {
 			case codes.InvalidArgument, codes.FailedPrecondition:
 				// business logic error which should not be retried or trigger
 				// the circuitbreaker.
-				return transport.GenerateResponse{Err: errors.New(st.Message())}, nil
+				switch st.Message() {
+				case qr.ErrorInvalidRecoveryLevel:
+					err = qr.ErrInvalidRecoveryLevel
+				case qr.ErrorInvalidSize:
+					err = qr.ErrInvalidSize
+				case qr.ErrorNoContent:
+					err = qr.ErrNoContent
+				case qr.ErrorContentTooLarge:
+					err = qr.ErrContentTooLarge
+				}
+				return transport.GenerateResponse{Err: err}, nil
 			default:
 				// error which might invoke a retry or trigger a circuitbreaker
-				return nil, errors.New(st.Message())
+				switch st.Message() {
+				case qr.ErrorGenerate:
+					err = qr.ErrGenerate
+				default:
+					err = errors.New(st.Message())
+				}
+				return nil, err
 			}
 		}
 	}

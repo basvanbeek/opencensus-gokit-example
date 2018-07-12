@@ -14,13 +14,22 @@ type Service interface {
 	Generate(ctx context.Context, url string, level RecoveryLevel, size int) ([]byte, error)
 }
 
-// Common Errors for QR Service
+// QR Service Error descriptions
+const (
+	ErrorInvalidRecoveryLevel = "invalid recovery level requested"
+	ErrorInvalidSize          = "invalid size requested"
+	ErrorNoContent            = "content can't be empty"
+	ErrorContentTooLarge      = "content size too large"
+	ErrorGenerate             = "unable to generate QR"
+)
+
+// QR Service Errors
 var (
-	ErrInvalidRecoveryLevel = errors.New("invalid recovery level requested")
-	ErrInvalidSize          = errors.New("invalid size requested")
-	ErrNoContent            = errors.New("content can't be empty")
-	ErrContentTooLarge      = errors.New("content size too large")
-	ErrGenerate             = errors.New("unable to generate QR")
+	ErrInvalidRecoveryLevel = errors.New(ErrorInvalidRecoveryLevel)
+	ErrInvalidSize          = errors.New(ErrorInvalidSize)
+	ErrNoContent            = errors.New(ErrorNoContent)
+	ErrContentTooLarge      = errors.New(ErrorContentTooLarge)
+	ErrGenerate             = errors.New(ErrorGenerate)
 )
 
 // RecoveryLevel : Error detection/recovery capacity.

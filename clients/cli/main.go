@@ -12,7 +12,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/etcd"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 	"go.opencensus.io/trace"
 
 	// project
@@ -28,7 +28,7 @@ const (
 func main() {
 	var (
 		err      error
-		instance = uuid.Must(uuid.NewV4())
+		instance = uuid.NewV4()
 	)
 
 	// initialize our OpenCensus configuration and defer a clean-up

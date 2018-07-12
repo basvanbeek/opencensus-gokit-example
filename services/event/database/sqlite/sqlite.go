@@ -9,9 +9,9 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
+	"github.com/kevinburke/go.uuid"
 	"github.com/mattn/go-sqlite3"
 	"github.com/openxact/versioning"
-	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/event/database"
@@ -45,11 +45,7 @@ func (s *sqlite) Create(
 ) (id *uuid.UUID, err error) {
 	// check if we need to create a new UUID
 	if uuid.Equal(event.ID, uuid.Nil) {
-		event.ID, err = uuid.NewV4()
-		if err != nil {
-			level.Error(s.logger).Log("err", err)
-			return nil, database.ErrRepository
-		}
+		event.ID = uuid.NewV4()
 	}
 
 	if _, err = s.db.ExecContext(

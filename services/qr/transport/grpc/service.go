@@ -61,17 +61,18 @@ func decodeGenerateRequest(_ context.Context, request interface{}) (interface{},
 // encodeGenerateResponse encodes the outgoing go kit payload to the grpc payload
 func encodeGenerateResponse(_ context.Context, response interface{}) (interface{}, error) {
 	res := response.(transport.GenerateResponse)
+	err := res.Failed()
 
-	switch res.Failed() {
+	switch err {
 	case nil:
 		return &pb.GenerateResponse{Image: res.QR}, nil
 	case qr.ErrInvalidRecoveryLevel, qr.ErrInvalidSize, qr.ErrNoContent:
-		return nil, status.Error(codes.InvalidArgument, res.Failed().Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case qr.ErrContentTooLarge:
-		return nil, status.Error(codes.FailedPrecondition, res.Failed().Error())
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	case qr.ErrGenerate:
-		return nil, status.Error(codes.Internal, res.Failed().Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	default:
-		return nil, status.Error(codes.Unknown, res.Failed().Error())
+		return nil, status.Error(codes.Unknown, err.Error())
 	}
 }

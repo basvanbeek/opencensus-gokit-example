@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	// external
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 )
 
 // ServiceName of this service.

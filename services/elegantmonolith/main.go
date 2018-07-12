@@ -18,9 +18,9 @@ import (
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/jmoiron/sqlx"
+	"github.com/kevinburke/go.uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
-	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device"
@@ -45,7 +45,7 @@ const serviceName = "ElegantMonolith"
 func main() {
 	var (
 		err      error
-		instance = uuid.Must(uuid.NewV4())
+		instance = uuid.NewV4()
 	)
 
 	// initialize our OpenCensus configuration and defer a clean-up

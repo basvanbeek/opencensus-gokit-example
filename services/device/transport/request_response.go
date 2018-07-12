@@ -3,7 +3,7 @@ package transport
 import (
 	// external
 	"github.com/go-kit/kit/endpoint"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 )
 
 var (

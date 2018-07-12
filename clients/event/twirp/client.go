@@ -6,7 +6,7 @@ import (
 
 	// external
 	"github.com/go-kit/kit/log"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 	"github.com/twitchtv/twirp"
 
 	// project

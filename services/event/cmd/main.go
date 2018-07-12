@@ -18,9 +18,9 @@ import (
 	"github.com/go-kit/kit/sd/etcd"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"github.com/kevinburke/go.uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
-	"github.com/satori/go.uuid"
 	"go.opencensus.io/plugin/ochttp"
 
 	// project
@@ -36,7 +36,7 @@ import (
 func main() {
 	var (
 		err      error
-		instance = uuid.Must(uuid.NewV4())
+		instance = uuid.NewV4()
 	)
 
 	// initialize our OpenCensus configuration and defer a clean-up

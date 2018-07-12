@@ -17,8 +17,8 @@ import (
 	"github.com/go-kit/kit/sd/etcd"
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/kevinburke/go.uuid"
 	"github.com/oklog/run"
-	"github.com/satori/go.uuid"
 	"go.opencensus.io/plugin/ochttp"
 
 	// project
@@ -39,7 +39,7 @@ import (
 func main() {
 	var (
 		err      error
-		instance = uuid.Must(uuid.NewV4())
+		instance = uuid.NewV4()
 	)
 
 	// initialize our OpenCensus configuration and defer a clean-up

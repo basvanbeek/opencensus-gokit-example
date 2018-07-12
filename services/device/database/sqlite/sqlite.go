@@ -9,8 +9,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
+	"github.com/kevinburke/go.uuid"
 	"github.com/openxact/versioning"
-	"github.com/satori/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/services/device/database"

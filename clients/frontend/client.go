@@ -7,7 +7,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 
 	// project
 	"github.com/basvanbeek/opencensus-gokit-example/clients/frontend/http"

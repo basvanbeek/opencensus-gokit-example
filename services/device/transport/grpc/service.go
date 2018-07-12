@@ -7,7 +7,7 @@ import (
 	// external
 	"github.com/go-kit/kit/log"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
-	"github.com/satori/go.uuid"
+	"github.com/kevinburke/go.uuid"
 	oldcontext "golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
