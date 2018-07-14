@@ -17,6 +17,7 @@ import (
 	"go.opencensus.io/trace"
 
 	// project
+	"github.com/basvanbeek/opencensus-gokit-example/shared/errormw"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/grpcconn"
 	"github.com/basvanbeek/opencensus-gokit-example/shared/oc"
 )
@@ -94,6 +95,9 @@ func CreateGRPCEndpoint(
 
 	// wrap our retries in an annotated parent span
 	endpoint = oc.RetryEndpoint(method, oc.RoundRobin, count, timeout)(endpoint)
+
+	// unwrap business logic errors
+	endpoint = errormw.UnwrapError(log.NewNopLogger())(endpoint)
 
 	// return our endpoint
 	return endpoint

@@ -3,6 +3,7 @@ package twirp
 import (
 	// stdlib
 	"context"
+	"errors"
 
 	// external
 	"github.com/go-kit/kit/log"
@@ -38,13 +39,15 @@ func (c client) Create(
 
 	if err != nil {
 		if twErr, ok := err.(twirp.Error); ok {
-			switch twErr.Error() {
+			switch twErr.Msg() {
 			case event.ErrorService:
 				return nil, event.ErrService
 			case event.ErrorUnauthorized:
 				return nil, event.ErrUnauthorized
 			case event.ErrorEventExists:
 				return nil, event.ErrEventExists
+			default:
+				return nil, errors.New(twErr.Msg())
 			}
 		}
 		return nil, err

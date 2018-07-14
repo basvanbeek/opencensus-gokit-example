@@ -64,29 +64,57 @@ func (s *service) Login(ctx context.Context, user, pass string) (*frontend.Login
 }
 
 func (s *service) EventCreate(ctx context.Context, tenantID uuid.UUID, evt frontend.Event) (*uuid.UUID, error) {
-	return s.evtClient.Create(ctx, tenantID, event.Event(evt))
+	id, err := s.evtClient.Create(ctx, tenantID, event.Event(evt))
+
+	switch err {
+	case nil:
+		return id, nil
+	case event.ErrEventExists:
+		return nil, frontend.ErrEventExists
+	default:
+		return nil, frontend.ErrService
+	}
 }
 
 func (s *service) EventGet(ctx context.Context, tenantID, id uuid.UUID) (*frontend.Event, error) {
 	evt, err := s.evtClient.Get(ctx, tenantID, id)
-	if err != nil {
-		return nil, err
+
+	switch err {
+	case nil:
+		return (*frontend.Event)(evt), nil
+	case event.ErrNotFound:
+		return nil, frontend.ErrEventNotFound
+	default:
+		return nil, frontend.ErrService
 	}
-	return (*frontend.Event)(evt), nil
 }
 
 func (s *service) EventUpdate(ctx context.Context, tenantID uuid.UUID, evt frontend.Event) error {
-	return s.evtClient.Update(ctx, tenantID, event.Event(evt))
+	err := s.evtClient.Update(ctx, tenantID, event.Event(evt))
+
+	switch err {
+	case nil:
+		return nil
+	case event.ErrEventExists:
+		return frontend.ErrEventExists
+	case event.ErrNotFound:
+		return frontend.ErrEventNotFound
+	default:
+		return frontend.ErrService
+	}
 }
 
 func (s *service) EventDelete(ctx context.Context, tenantID, id uuid.UUID) error {
-	return s.evtClient.Delete(ctx, tenantID, id)
+	if err := s.evtClient.Delete(ctx, tenantID, id); err != nil {
+		return frontend.ErrService
+	}
+	return nil
 }
 
 func (s *service) EventList(ctx context.Context, tenantID uuid.UUID) ([]*frontend.Event, error) {
 	evts, err := s.evtClient.List(ctx, tenantID)
 	if err != nil {
-		return nil, err
+		return nil, frontend.ErrService
 	}
 	events := make([]*frontend.Event, 0, len(evts))
 	for _, e := range evts {
@@ -115,17 +143,21 @@ func (s *service) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID,
 	}
 
 	session, err := s.devClient.Unlock(ctx, eventID, deviceID, unlockCode)
-	if err != nil {
-		return nil, err
-	}
 
-	return &frontend.Session{
-		EventID:       eventID,
-		EventCaption:  session.EventCaption,
-		DeviceID:      deviceID,
-		DeviceCaption: session.DeviceCaption,
-		Token:         "TOKEN",
-	}, nil
+	switch err {
+	case nil:
+		return &frontend.Session{
+			EventID:       eventID,
+			EventCaption:  session.EventCaption,
+			DeviceID:      deviceID,
+			DeviceCaption: session.DeviceCaption,
+			Token:         "TOKEN",
+		}, nil
+	case device.ErrUnlockNotFound:
+		return nil, frontend.ErrUnlockNotFound
+	default:
+		return nil, frontend.ErrService
+	}
 }
 
 // Generate returns a new QR code device unlock image based on the provided details.
@@ -147,7 +179,19 @@ func (s *service) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, u
 		return nil, frontend.ErrRequireUnlockCode
 	}
 
-	return s.qrClient.Generate(
+	data, err := s.qrClient.Generate(
 		ctx, eventID.String()+":"+deviceID.String()+":"+unlockCode, qr.LevelM, 256,
 	)
+
+	switch err {
+	case nil:
+		return data, nil
+	case qr.ErrNoContent, qr.ErrInvalidSize, qr.ErrInvalidRecoveryLevel,
+		qr.ErrContentTooLarge:
+		return nil, frontend.ErrInvalidQRParams
+	case qr.ErrGenerate:
+		return nil, frontend.ErrQRGenerate
+	default:
+		return nil, frontend.ErrService
+	}
 }

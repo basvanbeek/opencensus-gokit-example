@@ -215,12 +215,18 @@ func encodeErrorResponse(_ context.Context, err error, w http.ResponseWriter) {
 	var code int
 	switch err {
 	case frontend.ErrUserPassRequired, frontend.ErrRequireEventID,
-		frontend.ErrRequireDeviceID, frontend.ErrRequireUnlockCode:
+		frontend.ErrRequireDeviceID, frontend.ErrRequireUnlockCode,
+		frontend.ErrInvalidQRParams:
 		code = http.StatusBadRequest
+	case frontend.ErrEventExists:
+		code = http.StatusConflict
 	case frontend.ErrEventNotFound:
 		code = http.StatusNotFound
-	case frontend.ErrUserPassUnknown, frontend.ErrUnlockNotFound:
+	case frontend.ErrUserPassUnknown, frontend.ErrUnlockNotFound,
+		frontend.ErrUnauthorized:
 		code = http.StatusUnauthorized
+	case frontend.ErrQRGenerate:
+		code = http.StatusServiceUnavailable
 	default:
 		code = http.StatusInternalServerError
 	}

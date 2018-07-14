@@ -5,6 +5,7 @@ import (
 	"context"
 
 	// external
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
 	"github.com/kevinburke/go.uuid"
@@ -41,9 +42,6 @@ func (c *client) Login(ctx context.Context, user, pass string) (*frontend.Login,
 	}
 
 	res := response.(transport.LoginResponse)
-	if res.Failed() != nil {
-		return nil, res.Failed()
-	}
 
 	return &frontend.Login{
 		ID:         res.ID,
@@ -66,10 +64,6 @@ func (c *client) EventCreate(ctx context.Context, tenantID uuid.UUID, event fron
 	}
 
 	res := response.(transport.EventCreateResponse)
-	if res.Failed() != nil {
-		return nil, err
-	}
-
 	return res.EventID, nil
 }
 
@@ -86,9 +80,6 @@ func (c *client) EventGet(ctx context.Context, tenantID, eventID uuid.UUID) (*fr
 	}
 
 	res := response.(transport.EventGetResponse)
-	if res.Failed() != nil {
-		return nil, res.Failed()
-	}
 	return res.Event, nil
 }
 
@@ -134,9 +125,6 @@ func (c *client) EventList(ctx context.Context, tenantID uuid.UUID) ([]*frontend
 	}
 
 	res := response.(transport.EventListResponse)
-	if res.Failed() != nil {
-		return nil, res.Failed()
-	}
 
 	return res.Events, nil
 }
@@ -155,9 +143,6 @@ func (c *client) UnlockDevice(ctx context.Context, eventID, deviceID uuid.UUID, 
 	}
 
 	res := response.(transport.UnlockDeviceResponse)
-	if res.Failed() != nil {
-		return nil, err
-	}
 
 	return res.Session, nil
 }
@@ -176,9 +161,6 @@ func (c *client) GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, un
 	}
 
 	res := response.(transport.GenerateQRResponse)
-	if res.Failed() != nil {
-		return nil, res.Failed()
-	}
 
 	return res.QR, nil
 }

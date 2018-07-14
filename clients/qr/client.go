@@ -51,6 +51,7 @@ func (c client) Generate(
 	if err != nil {
 		return nil, err
 	}
+
 	response := res.(transport.GenerateResponse)
-	return response.QR, response.Err
+	return response.QR, nil
 }

@@ -27,15 +27,37 @@ type Service interface {
 	GenerateQR(ctx context.Context, eventID, deviceID uuid.UUID, unlockCode string) ([]byte, error)
 }
 
-// Common Service Errors
+// Frontend Service Error descriptions
+const (
+	ErrorService           = "internal service error"
+	ErrorUnauthorized      = "unauthorized"
+	ErrorUserPassRequired  = "both user and pass are required"
+	ErrorUserPassUnknown   = "unknown user/pass combination"
+	ErrorRequireEventID    = "missing required event id"
+	ErrorRequireDeviceID   = "missing required device id"
+	ErrorRequireUnlockCode = "missing required unlock code"
+	ErrorEventNotFound     = "event not found"
+	ErrorEventExists       = "event already exists"
+	ErrorUnlockNotFound    = "device / unlock code combination not found"
+	ErrorInvalidQRParams   = "QR Code can't be generated using provided parameters"
+	ErrorQRGenerate        = "QR Code generator failed"
+)
+
+// Frontend Service Errors
 var (
-	ErrUserPassRequired  = errors.New("both user and pass are required")
-	ErrUserPassUnknown   = errors.New("unknown user/pass combination")
-	ErrRequireEventID    = errors.New("missing required event id")
-	ErrRequireDeviceID   = errors.New("missing required device id")
-	ErrRequireUnlockCode = errors.New("missing required unlock code")
-	ErrEventNotFound     = errors.New("event not found")
-	ErrUnlockNotFound    = errors.New("device / unlock code combination not found")
+	ErrService           = errors.New(ErrorService)
+	ErrUnauthorized      = errors.New(ErrorUnauthorized)
+	ErrUserPassRequired  = errors.New(ErrorUserPassRequired)
+	ErrUserPassUnknown   = errors.New(ErrorUserPassUnknown)
+	ErrRequireEventID    = errors.New(ErrorRequireEventID)
+	ErrRequireDeviceID   = errors.New(ErrorRequireDeviceID)
+	ErrRequireUnlockCode = errors.New(ErrorRequireUnlockCode)
+	ErrEventNotFound     = errors.New(ErrorEventNotFound)
+	ErrEventExists       = errors.New(ErrorEventExists)
+	ErrUnlockNotFound    = errors.New(ErrorUnlockNotFound)
+
+	ErrInvalidQRParams = errors.New(ErrorInvalidQRParams)
+	ErrQRGenerate      = errors.New(ErrorQRGenerate)
 )
 
 // Login holds login details
