@@ -1,6 +1,8 @@
 # opencensus-gokit-example
 Example of using OpenCensus with Go kit
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/basvanbeek/opencensus-gokit-example)](https://goreportcard.com/report/github.com/basvanbeek/opencensus-gokit-example)
+
 # notable dependencies
 - Go kit
 - OpenCensus

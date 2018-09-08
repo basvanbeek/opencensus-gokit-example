@@ -12,7 +12,6 @@ import (
 	"time"
 
 	// external
-	"github.com/basvanbeek/ocsql"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/sd/etcd"
@@ -23,6 +22,7 @@ import (
 	"github.com/kevinburke/go.uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/oklog/run"
+	"github.com/opencensus-integrations/ocsql"
 	"google.golang.org/grpc"
 
 	// project
